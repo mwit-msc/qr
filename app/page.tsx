@@ -6,7 +6,7 @@ import { toast, Toaster } from 'react-hot-toast'
 import { Download, Copy, QrCode, Sparkles, Zap, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// Logo options with fallback base64 images for reliability
+// Logo options in JSON format
 const logoOptions = [
   {
     id: 'none',
@@ -18,20 +18,15 @@ const logoOptions = [
     id: 'alvis',
     name: 'Alvis Logo',
     path: '/logo_alvis.png',
-    fallback: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzMzOTVmZiIvPgo8dGV4dCB4PSIyMCIgeT0iMjYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BPC90ZXh0Pgo8L3N2Zz4K',
     description: 'Default Alvis logo'
   },
   {
     id: 'openhouse2025',
     name: 'Open House 2025 Logo',
     path: '/logo_openhouse2025.png',
-    fallback: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iI2ZkZDgzNSIvPgo8dGV4dCB4PSIyMCIgeT0iMTgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzE5MjUzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+T0g8L3RleHQ+Cjx0ZXh0IHg9IjIwIiB5PSIzMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjgiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjMTkyNTMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yNTwvdGV4dD4KPC9zdmc+',
     description: 'Open House 2025 event logo'
   }
 ]
-
-// Fallback background as base64 for reliability
-const fallbackBackground = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZGVmcz4KICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzMzOTVmZjtzdG9wLW9wYWNpdHk6MC4zIiAvPgogICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmOWZhZmI7c3RvcC1vcGFjaXR5OjAuOCIgLz4KICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6I2ZkZDgzNTtzdG9wLW9wYWNpdHk6MC4zIiAvPgogIDwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjE5MjAiIGhlaWdodD0iMTA4MCIgZmlsbD0idXJsKCNiZ0dyYWRpZW50KSIvPgo8L3N2Zz4K'
 
 // Animation variants
 const pageVariants = {
@@ -142,7 +137,6 @@ export default function QRCodeGenerator() {
   const [selectedLogo, setSelectedLogo] = useState('alvis')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -150,17 +144,6 @@ export default function QRCodeGenerator() {
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100)
     return () => clearTimeout(timer)
-  }, [])
-
-  // Preload background image with fallback
-  useEffect(() => {
-    const img = new Image()
-    img.onload = () => setBackgroundImageLoaded(true)
-    img.onerror = () => {
-      console.warn('Background image failed to load, using fallback')
-      setBackgroundImageLoaded(true)
-    }
-    img.src = '/coverbg.png'
   }, [])
 
   // Close dropdown when clicking outside
@@ -202,16 +185,12 @@ export default function QRCodeGenerator() {
         // Step 2: Draw logo at center (if selected)
         const selectedLogoOption = logoOptions.find(logo => logo.id === selectedLogo)
         
-        if (selectedLogoOption && (selectedLogoOption.path || selectedLogoOption.fallback)) {
+        if (selectedLogoOption && selectedLogoOption.path) {
           const ctx = canvas.getContext('2d')
           if (!ctx) return
 
           const logo = new Image()
-          logo.crossOrigin = 'anonymous' // Handle CORS issues
-          
-          // Try primary path first, then fallback
-          const imageSrc = selectedLogoOption.path || selectedLogoOption.fallback
-
+          logo.src = selectedLogoOption.path
           logo.onload = () => {
             const logoSize = canvas.width * 0.2 // 20% of canvas width
             const x = (canvas.width - logoSize) / 2
@@ -237,20 +216,12 @@ export default function QRCodeGenerator() {
           }
 
           logo.onerror = () => {
-            // If primary image fails and we have a fallback, try it
-            if (selectedLogoOption.path && selectedLogoOption.fallback && imageSrc === selectedLogoOption.path) {
-              logo.src = selectedLogoOption.fallback
-              return
-            }
-            
-            // If all fails, just use QR code without logo
+            // If logo fails to load, just use QR code without logo
             const dataUrl = canvas.toDataURL('image/png', 1.0)
             setQrCodeUrl(dataUrl)
             setIsGenerating(false)
             toast.error(`Failed to load ${selectedLogoOption.name}`)
           }
-
-          logo.src = imageSrc
         } else {
           // No logo selected, just use plain QR code
           const dataUrl = canvas.toDataURL('image/png', 1.0)
@@ -273,7 +244,7 @@ export default function QRCodeGenerator() {
 
   // Detect if device is mobile
   const isMobile = () => {
-    return typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
   }
 
   // Save QR code as PNG with mobile-friendly approach
@@ -282,8 +253,6 @@ export default function QRCodeGenerator() {
       toast.error('No QR code to save')
       return
     }
-
-    if (typeof window === 'undefined') return
 
     if (isMobile()) {
       // For mobile, try Web Share API first, then provide instructions
@@ -339,8 +308,6 @@ export default function QRCodeGenerator() {
       toast.error('No QR code to copy')
       return
     }
-
-    if (typeof window === 'undefined') return
 
     // Check if we're on mobile
     if (isMobile()) {
@@ -405,11 +372,6 @@ export default function QRCodeGenerator() {
     }
   }
 
-  // Determine background style
-  const backgroundStyle = backgroundImageLoaded 
-    ? { backgroundImage: 'url(/coverbg.png)' }
-    : { backgroundImage: `url(${fallbackBackground})` }
-
   return (
     <motion.div 
       className="h-screen relative overflow-hidden"
@@ -418,7 +380,7 @@ export default function QRCodeGenerator() {
       variants={pageVariants}
       transition={{ duration: 0.8, ease: "easeOut" }}
       style={{
-        ...backgroundStyle,
+        backgroundImage: 'url(/coverbg.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
@@ -636,17 +598,12 @@ export default function QRCodeGenerator() {
                           transition={{ duration: 0.2 }}
                         >
                           <img 
-                            src={logoOptions.find(logo => logo.id === selectedLogo)?.path || logoOptions.find(logo => logo.id === selectedLogo)?.fallback || ''} 
+                            src={logoOptions.find(logo => logo.id === selectedLogo)?.path || ''} 
                             alt="" 
                             className="w-3 h-3 object-contain"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              const logoOption = logoOptions.find(logo => logo.id === selectedLogo);
-                              if (logoOption?.fallback && target.src !== logoOption.fallback) {
-                                target.src = logoOption.fallback;
-                              } else {
-                                target.style.display = 'none';
-                              }
+                              target.style.display = 'none';
                             }}
                           />
                         </motion.div>
@@ -689,23 +646,19 @@ export default function QRCodeGenerator() {
                             whileHover={{ scale: 1.02, x: 5 }}
                             whileTap={{ scale: 0.98 }}
                           >
-                            {logo.path || logo.fallback ? (
+                            {logo.path ? (
                               <motion.div 
                                 className="w-6 h-6 bg-slate-100 rounded border flex items-center justify-center flex-shrink-0"
                                 whileHover={{ scale: 1.1 }}
                                 transition={{ duration: 0.2 }}
                               >
                                 <img 
-                                  src={logo.path || logo.fallback} 
+                                  src={logo.path} 
                                   alt={logo.name} 
                                   className="w-4 h-4 object-contain"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    if (logo.fallback && target.src !== logo.fallback) {
-                                      target.src = logo.fallback;
-                                    } else {
-                                      target.style.display = 'none';
-                                    }
+                                    target.style.display = 'none';
                                   }}
                                 />
                               </motion.div>
