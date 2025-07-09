@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { toast, Toaster } from 'react-hot-toast'
 import { Download, Copy, QrCode, Sparkles, Zap, ChevronDown } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // Logo options in JSON format
 const logoOptions = [
@@ -27,14 +28,123 @@ const logoOptions = [
   }
 ]
 
+// Animation variants
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 }
+}
+
+const cardVariants = {
+  initial: { opacity: 0, scale: 0.95, y: 30 },
+  animate: { 
+    opacity: 1, 
+    scale: 1, 
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut"
+    }
+  }
+}
+
+const headerVariants = {
+  initial: { opacity: 0, y: -30 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: "easeOut"
+    }
+  }
+}
+
+const inputVariants = {
+  initial: { opacity: 0, x: -20 },
+  animate: { 
+    opacity: 1, 
+    x: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  }
+}
+
+const dropdownVariants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { 
+    opacity: 1, 
+    x: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  }
+}
+
+const qrCodeVariants = {
+  initial: { opacity: 0, scale: 0.8, rotateY: 90 },
+  animate: { 
+    opacity: 1, 
+    scale: 1, 
+    rotateY: 0,
+    transition: {
+      duration: 0.7,
+      ease: "easeOut"
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.8,
+    transition: {
+      duration: 0.3
+    }
+  }
+}
+
+const buttonVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: "easeOut"
+    }
+  },
+  hover: { 
+    scale: 1.05, 
+    y: -2,
+    transition: {
+      duration: 0.2,
+      ease: "easeInOut"
+    }
+  },
+  tap: { 
+    scale: 0.95,
+    transition: {
+      duration: 0.1
+    }
+  }
+}
+
 export default function QRCodeGenerator() {
   const [text, setText] = useState('https://mwit.ac.th')
   const [qrCodeUrl, setQrCodeUrl] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedLogo, setSelectedLogo] = useState('alvis')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Trigger animations on mount
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -263,8 +373,12 @@ export default function QRCodeGenerator() {
   }
 
   return (
-    <div 
+    <motion.div 
       className="h-screen relative overflow-hidden"
+      initial="initial"
+      animate="animate"
+      variants={pageVariants}
+      transition={{ duration: 0.8, ease: "easeOut" }}
       style={{
         backgroundImage: 'url(/coverbg.png)',
         backgroundSize: 'cover',
@@ -273,61 +387,198 @@ export default function QRCodeGenerator() {
       }}
     >
       {/* Gradient overlay for background only */}
-      <div className="absolute inset-0 bg-gradient-to-b via-transparent from-blue-500/60 to-yellow-300/60 pointer-events-none"></div>
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-b via-transparent from-blue-500/60 to-yellow-300/60 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2, delay: 0.3 }}
+      />
 
-      {/* Animated background elements */}
+      {/* Enhanced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-yellow-200/20 to-blue-300/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-200/20 to-yellow-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <motion.div 
+          className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-yellow-200/20 to-blue-300/20 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ 
+            duration: 4, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-200/20 to-yellow-300/20 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{ 
+            duration: 5, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
+        
+        {/* Floating particles */}
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-2 h-2 bg-yellow-300/40 rounded-full"
+          animate={{ 
+            y: [-10, 10, -10],
+            opacity: [0.4, 0.8, 0.4]
+          }}
+          transition={{ 
+            duration: 3, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.div 
+          className="absolute top-3/4 right-1/3 w-1 h-1 bg-blue-400/40 rounded-full"
+          animate={{ 
+            scale: [1, 1.5, 1],
+            opacity: [0.3, 0.7, 0.3]
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 0.5 
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-1/3 left-1/2 w-1.5 h-1.5 bg-amber-300/40 rounded-full"
+          animate={{ 
+            x: [-5, 5, -5],
+            opacity: [0.2, 0.6, 0.2]
+          }}
+          transition={{ 
+            duration: 4, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 1.2 
+          }}
+        />
       </div>
 
       <div className="h-full flex flex-col relative z-10">
         <div className="container mx-auto px-4 py-3 max-w-4xl flex-1 flex flex-col min-h-0">
-          {/* Compact Header */}
-          <div className="text-center mb-3">
+          {/* Animated Header */}
+          <motion.div 
+            className="text-center mb-3"
+            variants={headerVariants}
+            initial="initial"
+            animate="animate"
+          >
             <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="relative">
+              <motion.div 
+                className="relative"
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ duration: 0.3 }}
+              >
                 <QrCode className="w-8 h-8 text-slate-800 drop-shadow-lg" />
-                <Sparkles className="w-4 h-4 text-amber-600 absolute -top-1 -right-1 animate-pulse drop-shadow-lg" />
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 drop-shadow-lg">
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.7, 1, 0.7]
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                >
+                  <Sparkles className="w-4 h-4 text-amber-600 absolute -top-1 -right-1 drop-shadow-lg" />
+                </motion.div>
+              </motion.div>
+              <motion.h1 
+                className="text-3xl md:text-4xl font-bold text-slate-900 drop-shadow-lg"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
                 QR Generator
-              </h1>
+              </motion.h1>
             </div>
-          </div>
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/60 p-4 mb-3 hover:shadow-2xl transition-all duration-500 relative z-20 flex-1 flex flex-col min-h-0">
+          </motion.div>
+          
+          {/* Animated Main Card */}
+          <motion.div 
+            className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/60 p-4 mb-3 hover:shadow-2xl transition-all duration-500 relative z-20 flex-1 flex flex-col min-h-0"
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+            whileHover={{ 
+              scale: 1.02,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+            }}
+            transition={{ duration: 0.3 }}
+          >
             <div className="space-y-3">
-              {/* Text Input */}
-              <div>
+              {/* Animated Text Input */}
+              <motion.div
+                variants={inputVariants}
+                initial="initial"
+                animate="animate"
+                transition={{ delay: 0.2 }}
+              >
                 <label htmlFor="text-input" className="text-base font-semibold text-slate-800 flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-gradient-to-r from-sky-500 to-blue-500 rounded-full"></div>
+                  <motion.div 
+                    className="w-2 h-2 bg-gradient-to-r from-sky-500 to-blue-500 rounded-full"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
                   Enter your content
                 </label>
                 <div className="relative">
-                  <input
+                  <motion.input
                     id="text-input"
                     type="text"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="Enter text, URL, or any content to generate QR code..."
                     className="w-full text-sm py-2.5 px-4 border-2 border-slate-200 focus:border-blue-500 rounded-xl bg-white shadow-inner transition-all duration-300 hover:shadow-md focus:shadow-lg focus:outline-none text-slate-900"
+                    whileFocus={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
                   />
-                  {isGenerating && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {isGenerating && (
+                      <motion.div 
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <motion.div 
+                          className="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Logo Selection Dropdown */}
-              <div>
+              {/* Animated Logo Selection Dropdown */}
+              <motion.div
+                variants={dropdownVariants}
+                initial="initial"
+                animate="animate"
+                transition={{ delay: 0.4 }}
+              >
                 <label className="text-base font-semibold text-slate-800 flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></div>
+                  <motion.div 
+                    className="w-2 h-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                  />
                   Choose Logo Overlay
                 </label>
                 <div className="relative" ref={dropdownRef}>
-                  <button
+                  <motion.button
                     type="button"
                     onClick={(e) => {
                       e.preventDefault()
@@ -335,10 +586,17 @@ export default function QRCodeGenerator() {
                       setIsDropdownOpen(!isDropdownOpen)
                     }}
                     className="w-full text-sm py-2.5 px-4 border-2 border-slate-200 hover:border-amber-400 focus:border-amber-500 rounded-xl bg-white shadow-inner transition-all duration-300 hover:shadow-md focus:shadow-lg focus:outline-none text-slate-900 flex items-center justify-between"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <div className="flex items-center gap-2">
                       {selectedLogo !== 'none' && logoOptions.find(logo => logo.id === selectedLogo)?.path && (
-                        <div className="w-5 h-5 bg-slate-100 rounded border flex items-center justify-center">
+                        <motion.div 
+                          className="w-5 h-5 bg-slate-100 rounded border flex items-center justify-center"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.2 }}
+                        >
                           <img 
                             src={logoOptions.find(logo => logo.id === selectedLogo)?.path || ''} 
                             alt="" 
@@ -348,122 +606,266 @@ export default function QRCodeGenerator() {
                               target.style.display = 'none';
                             }}
                           />
-                        </div>
+                        </motion.div>
                       )}
                       <span>{logoOptions.find(logo => logo.id === selectedLogo)?.name || 'Select Logo'}</span>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
+                    <motion.div
+                      animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <ChevronDown className="w-4 h-4 text-slate-500" />
+                    </motion.div>
+                  </motion.button>
                   
-                  {/* Fixed Dropdown Menu */}
-                  {isDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-xl z-[999] max-h-48 overflow-y-auto">
-                      {logoOptions.map((logo) => (
-                        <button
-                          key={logo.id}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleLogoSelect(logo.id)
-                          }}
-                          className={`w-full text-left px-3 py-2 hover:bg-slate-50 active:bg-slate-100 transition-colors duration-200 flex items-center gap-2 border-b border-slate-100 last:border-b-0 cursor-pointer ${
-                            selectedLogo === logo.id ? 'bg-amber-50 border-amber-200' : ''
-                          }`}
-                        >
-                          {logo.path ? (
-                            <div className="w-6 h-6 bg-slate-100 rounded border flex items-center justify-center flex-shrink-0">
-                              <img 
-                                src={logo.path} 
-                                alt={logo.name} 
-                                className="w-4 h-4 object-contain"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                }}
+                  {/* Enhanced Animated Dropdown Menu */}
+                  <AnimatePresence>
+                    {isDropdownOpen && (
+                      <motion.div 
+                        className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-xl z-[999] max-h-48 overflow-y-auto"
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {logoOptions.map((logo, index) => (
+                          <motion.button
+                            key={logo.id}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleLogoSelect(logo.id)
+                            }}
+                            className={`w-full text-left px-3 py-2 hover:bg-slate-50 active:bg-slate-100 transition-colors duration-200 flex items-center gap-2 border-b border-slate-100 last:border-b-0 cursor-pointer ${
+                              selectedLogo === logo.id ? 'bg-amber-50 border-amber-200' : ''
+                            }`}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05, duration: 0.2 }}
+                            whileHover={{ scale: 1.02, x: 5 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {logo.path ? (
+                              <motion.div 
+                                className="w-6 h-6 bg-slate-100 rounded border flex items-center justify-center flex-shrink-0"
+                                whileHover={{ scale: 1.1 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <img 
+                                  src={logo.path} 
+                                  alt={logo.name} 
+                                  className="w-4 h-4 object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              </motion.div>
+                            ) : (
+                              <motion.div 
+                                className="w-6 h-6 bg-slate-200 rounded border flex items-center justify-center flex-shrink-0"
+                                whileHover={{ scale: 1.1 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <QrCode className="w-3 h-3 text-slate-500" />
+                              </motion.div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm text-slate-900">{logo.name}</div>
+                              <div className="text-xs text-slate-500 truncate">{logo.description}</div>
+                            </div>
+                            {selectedLogo === logo.id && (
+                              <motion.div 
+                                className="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.3 }}
                               />
-                            </div>
-                          ) : (
-                            <div className="w-6 h-6 bg-slate-200 rounded border flex items-center justify-center flex-shrink-0">
-                              <QrCode className="w-3 h-3 text-slate-500" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-slate-900">{logo.name}</div>
-                            <div className="text-xs text-slate-500 truncate">{logo.description}</div>
-                          </div>
-                          {selectedLogo === logo.id && (
-                            <div className="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0"></div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                            )}
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
             </div>
-          <div className="pt-1"></div>
-            <div className="text-center flex-1 flex flex-col min-h-0">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
+            
+            <div className="pt-1"></div>
+            
+            <motion.div 
+              className="text-center flex-1 flex flex-col min-h-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+            >
+              <motion.h2 
+                className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
                 Your QR Code
-              </h2>
+              </motion.h2>
+              <div className="pt-2"></div>
 
-              {qrCodeUrl ? (
-                <div className="flex-1 flex flex-col items-center justify-center min-h-0">
-                  <div className="relative group flex-shrink-0">
-                    <div className="absolute -inset-2 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
-                    <div className="relative p-3 bg-white rounded-2xl shadow-lg border border-slate-100">
-                      <img
-                        src={qrCodeUrl}
-                        alt="Generated QR Code"
-                        className="w-48 h-48 md:w-56 md:h-56 object-contain rounded-xl shadow-md select-none"
-                        onContextMenu={(e) => {
-                          // Allow context menu on mobile for save option
-                          if (isMobile()) {
-                            return true
-                          }
+              <AnimatePresence mode="wait">
+                {qrCodeUrl ? (
+                  <motion.div 
+                    className=" flex flex-col items-center justify-center min-h-0"
+                    key="qr-code"
+                    variants={qrCodeVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    <motion.div 
+                      className="relative group flex-shrink-0"
+                      whileHover={{ 
+                        scale: 1.05,
+                        rotateY: 5,
+                        rotateX: 5
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <motion.div 
+                        className="absolute -inset-2 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500 bg-gradient-to-r from-sky-200 to-blue-300"
+                        animate={{ 
+                          scale: [1, 1.05, 1],
+                          opacity: [0.4, 0.6, 0.4]
+                        }}
+                        transition={{ 
+                          duration: 3, 
+                          repeat: Infinity, 
+                          ease: "easeInOut" 
                         }}
                       />
-                      {isMobile() && (
-                        <div className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded-lg text-center opacity-75">
-                          💡 Long press to save to photos
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <button
-                      onClick={saveAsPNG}
-                      className="group flex items-center justify-center gap-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      <Download className="w-4 h-4 group-hover:animate-bounce" />
-                      {isMobile() ? 'Save to Phone' : 'Save as PNG'}
-                    </button>
-                    <button
-                      onClick={copyToClipboard}
-                      className="group flex items-center justify-center gap-2 border-2 border-slate-300 hover:border-sky-400 hover:bg-sky-50 px-5 py-2.5 rounded-xl text-sm font-semibold bg-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 text-slate-700"
-                    >
-                      <Copy className="w-4 h-4 group-hover:animate-pulse" />
-                      {isMobile() ? 'Share/Copy' : 'Copy to Clipboard'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center min-h-0">
-                  <div className="w-48 h-48 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-300 shadow-inner">
-                    <div className="text-center text-slate-500">
-                      <div className="relative mb-3">
-                        <QrCode className="w-12 h-12 mx-auto opacity-40" />
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full animate-ping opacity-50"></div>
+                      <div className="relative p-3 bg-white rounded-2xl shadow-lg border border-slate-100">
+                        <img
+                          src={qrCodeUrl}
+                          alt="Generated QR Code"
+                          className="w-48 h-48 md:w-56 md:h-56 object-contain rounded-xl shadow-md select-none"
+                          onContextMenu={(e) => {
+                            if (isMobile()) {
+                              return true
+                            }
+                          }}
+                        />
+                        {isMobile() && (
+                          <motion.div 
+                            className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded-lg text-center opacity-75"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.75 }}
+                            transition={{ delay: 0.5 }}
+                          >
+                            💡 Long press to save to photos
+                          </motion.div>
+                        )}
                       </div>
-                      <p className="text-base font-medium">Start typing to generate</p>
-                      <p className="text-xs mt-1 opacity-70">Your QR code will appear here</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                    </motion.div>
+                    <div className="pt-8"></div>
+                    
+                    <motion.div 
+                      className="flex flex-col sm:flex-row gap-2 justify-center"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.4 }}
+                    >
+                      <motion.button
+                        onClick={saveAsPNG}
+                        className="group flex items-center justify-center gap-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300"
+                        variants={buttonVariants}
+                        initial="initial"
+                        animate="animate"
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        <motion.div
+                          animate={{ y: [0, -2, 0] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                        >
+                          <Download className="w-4 h-4" />
+                        </motion.div>
+                        {isMobile() ? 'Save to Phone' : 'Save as PNG'}
+                      </motion.button>
+                      <motion.button
+                        onClick={copyToClipboard}
+                        className="group flex items-center justify-center gap-2 border-2 border-slate-300 hover:border-sky-400 hover:bg-sky-50 px-5 py-2.5 rounded-xl text-sm font-semibold bg-white shadow-lg hover:shadow-xl transform transition-all duration-300 text-slate-700"
+                        variants={buttonVariants}
+                        initial="initial"
+                        animate="animate"
+                        whileHover="hover"
+                        whileTap="tap"
+                        transition={{ delay: 0.1 }}
+                      >
+                        <motion.div
+                          animate={{ 
+                            scale: [1, 1.1, 1],
+                            opacity: [1, 0.7, 1]
+                          }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </motion.div>
+                        {isMobile() ? 'Share/Copy' : 'Copy to Clipboard'}
+                      </motion.button>
+                    </motion.div>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    className="flex-1 flex items-center justify-center min-h-0"
+                    key="placeholder"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div 
+                      className="w-48 h-48 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-300 shadow-inner"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="text-center text-slate-500">
+                        <div className="relative mb-3">
+                          <motion.div
+                            animate={isGenerating ? { rotate: 360 } : { scale: [1, 1.1, 1] }}
+                            transition={isGenerating ? { duration: 1, repeat: Infinity, ease: "linear" } : { duration: 2, repeat: Infinity }}
+                          >
+                            <QrCode className="w-12 h-12 mx-auto opacity-40" />
+                          </motion.div>
+                          <motion.div 
+                            className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full"
+                            animate={{ 
+                              scale: [1, 1.5, 1],
+                              opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{ 
+                              duration: 1.5, 
+                              repeat: Infinity 
+                            }}
+                          />
+                        </div>
+                        <motion.p 
+                          className="text-base font-medium"
+                          animate={{ opacity: [0.7, 1, 0.7] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          {isGenerating ? 'Generating...' : 'Start typing to generate'}
+                        </motion.p>
+                        <motion.p 
+                          className="text-xs mt-1 opacity-70"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 0.7 }}
+                          transition={{ delay: 0.5 }}
+                        >
+                          {isGenerating ? 'Please wait' : 'Your QR code will appear here'}
+                        </motion.p>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
 
@@ -499,6 +901,6 @@ export default function QRCodeGenerator() {
           },
         }}
       />
-    </div>
+    </motion.div>
   )
 }
