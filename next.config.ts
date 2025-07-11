@@ -1,5 +1,5 @@
 const nextConfig = {
-  output: 'export', // required for static site export
+  output: 'export',
 }
 
 export default nextConfig;
