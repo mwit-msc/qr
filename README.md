@@ -1,5 +1,10 @@
 # MWIT QR Generator
 
+[![Cloudflare Pages](https://img.shields.io/badge/Deployed%20on-Cloudflare%20Pages-orange?logo=cloudflare)](https://pages.cloudflare.com)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 A modern, stylish QR code generator built for MWIT. Create customized QR codes with various styles and optional logo overlays.
 
 ## Features
@@ -19,42 +24,13 @@ A modern, stylish QR code generator built for MWIT. Create customized QR codes w
 - lucide-react
 - react-hot-toast
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Installation
-
-```bash
-npm install
-```
-
-### Development
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Build
-
-```bash
-npm run build
-```
-
-### Production
-
-```bash
-npm start
-```
-
 ## Usage
 
 1. Enter any text or URL in the input field
 2. Select a QR code style from the dropdown
 3. Optionally choose a logo overlay
 4. Download the QR code or copy it to clipboard
+
+## License
+
+[MIT](./LICENSE)
