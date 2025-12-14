@@ -217,7 +217,7 @@ export default function QRCodeGenerator() {
           margin: 10,
           dotsOptions: {
             color: '#1e293b',
-            type: selectedStyle as Options['dotsOptions']['type'],
+            type: selectedStyle as NonNullable<Options['dotsOptions']>['type'],
           },
           cornersSquareOptions: {
             color: '#1e293b',
@@ -241,14 +241,14 @@ export default function QRCodeGenerator() {
         if (blob) {
           // If no logo, just use the QR code directly
           if (!processedLogoUrl) {
-            const url = URL.createObjectURL(blob)
+            const url = URL.createObjectURL(blob as Blob)
             setQrCodeUrl(url)
           } else {
             // Manually composite logo on top of QR code
             const qrImg = new Image()
             const logoImg = new Image()
 
-            const qrUrl = URL.createObjectURL(blob)
+            const qrUrl = URL.createObjectURL(blob as Blob)
 
             await new Promise<void>((resolve) => {
               let loaded = 0
@@ -263,7 +263,7 @@ export default function QRCodeGenerator() {
               logoImg.onerror = checkDone
 
               qrImg.src = qrUrl
-              logoImg.src = processedLogoUrl
+              logoImg.src = processedLogoUrl!
             })
 
             // Create final canvas
@@ -324,7 +324,7 @@ export default function QRCodeGenerator() {
         try {
           const blob = await qrRef.current.getRawData('png')
           if (blob) {
-            const file = new File([blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
+            const file = new File([blob as Blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
             await navigator.share({
               title: 'QR Code',
               text: 'Save this QR code to your photos',
@@ -354,7 +354,7 @@ export default function QRCodeGenerator() {
         try {
           const blob = await qrRef.current.getRawData('png')
           if (blob) {
-            const file = new File([blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
+            const file = new File([blob as Blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
             await navigator.share({
               title: 'QR Code',
               text: 'Check out this QR code!',
@@ -379,7 +379,7 @@ export default function QRCodeGenerator() {
       if (navigator.clipboard && navigator.clipboard.write && qrRef.current) {
         const blob = await qrRef.current.getRawData('png')
         if (blob) {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob as Blob })])
           toast.success('QR code copied to clipboard!')
           return
         }
