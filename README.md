@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MWIT QR Generator
+
+A modern, stylish QR code generator built for MWIT. Create customized QR codes with various styles and optional logo overlays.
+
+## Features
+
+- **Multiple QR Styles** - Square, Dots, Rounded, Extra Rounded, Classy, and Classy Rounded
+- **Logo Overlays** - Add Alvis or Open House 2025 logos to your QR codes
+- **Export Options** - Download as PNG or copy to clipboard
+- **Mobile Friendly** - Native share functionality on mobile devices
+- **Real-time Preview** - See your QR code update as you type
+
+## Tech Stack
+
+- Next.js 16 (Turbopack)
+- React 19
+- Tailwind CSS 4
+- qr-code-styling
+- lucide-react
+- react-hot-toast
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+### Production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Enter any text or URL in the input field
+2. Select a QR code style from the dropdown
+3. Optionally choose a logo overlay
+4. Download the QR code or copy it to clipboard
