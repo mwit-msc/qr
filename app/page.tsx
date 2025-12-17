@@ -24,6 +24,12 @@ const logoOptions = [
     name: 'Open House 2025 Logo',
     path: '/logo_openhouse2025.png',
     description: 'Open House 2025 event logo'
+  },
+  {
+    id: 'premwit2026',
+    name: 'PRE-MWIT 2026 Logo',
+    path: '/logo_premwit2026.png',
+    description: 'PRE-MWIT 2026 Logo'
   }
 ]
 
