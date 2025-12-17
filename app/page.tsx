@@ -5,31 +5,35 @@ import QRCodeStyling, { type Options } from 'qr-code-styling'
 import { toast, Toaster } from 'react-hot-toast'
 import { Download, Copy, QrCode, Sparkles, ChevronDown } from 'lucide-react'
 
-// Logo options
+// Logo options - sizePercent controls logo size (100 = default, 200 = 2x larger, etc.)
 const logoOptions = [
   {
     id: 'none',
     name: 'No Logo',
     path: null,
-    description: 'QR code without logo overlay'
+    description: 'QR code without logo overlay',
+    sizePercent: 100
   },
   {
     id: 'alvis',
     name: 'Alvis Logo',
     path: '/logo_alvis.png',
-    description: 'Default Alvis logo'
+    description: 'Default Alvis logo',
+    sizePercent: 100
   },
   {
     id: 'openhouse2025',
     name: 'Open House 2025 Logo',
     path: '/logo_openhouse2025.png',
-    description: 'Open House 2025 event logo'
+    description: 'Open House 2025 event logo',
+    sizePercent: 100
   },
   {
     id: 'premwit2026',
     name: 'PRE-MWIT 2026 Logo',
     path: '/logo_premwit2026.png',
-    description: 'PRE-MWIT 2026 Logo'
+    description: 'PRE-MWIT 2026 Logo',
+    sizePercent: 200
   }
 ]
 
@@ -46,11 +50,24 @@ const qrStyleOptions = [
 // Helper to process logo with options
 const processLogo = (
   logoImg: HTMLImageElement,
-  size: number,
+  maxSize: number,
   options: { removeWhiteBg: boolean; addOutline: boolean; outlineWidth?: number }
 ): Promise<string> => {
   return new Promise((resolve) => {
     const { removeWhiteBg, addOutline, outlineWidth = 6 } = options
+
+    // Calculate scaled dimensions preserving aspect ratio
+    const aspectRatio = logoImg.width / logoImg.height
+    let scaledWidth: number, scaledHeight: number
+    if (aspectRatio >= 1) {
+      // Wider than tall
+      scaledWidth = maxSize
+      scaledHeight = Math.round(maxSize / aspectRatio)
+    } else {
+      // Taller than wide
+      scaledHeight = maxSize
+      scaledWidth = Math.round(maxSize * aspectRatio)
+    }
 
     // Step 1: Create canvas with logo
     const tempCanvas = document.createElement('canvas')
@@ -83,23 +100,24 @@ const processLogo = (
     // If no outline needed, just return scaled logo
     if (!addOutline) {
       const finalCanvas = document.createElement('canvas')
-      finalCanvas.width = size
-      finalCanvas.height = size
+      finalCanvas.width = scaledWidth
+      finalCanvas.height = scaledHeight
       const finalCtx = finalCanvas.getContext('2d')
       if (!finalCtx) {
         resolve('')
         return
       }
-      finalCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, size, size)
+      finalCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, scaledWidth, scaledHeight)
       resolve(finalCanvas.toDataURL('image/png', 1.0))
       return
     }
 
     // Step 2: Create final canvas with outline
-    const finalSize = size + outlineWidth * 2
+    const finalWidth = scaledWidth + outlineWidth * 2
+    const finalHeight = scaledHeight + outlineWidth * 2
     const finalCanvas = document.createElement('canvas')
-    finalCanvas.width = finalSize
-    finalCanvas.height = finalSize
+    finalCanvas.width = finalWidth
+    finalCanvas.height = finalHeight
     const finalCtx = finalCanvas.getContext('2d')
     if (!finalCtx) {
       resolve('')
@@ -108,8 +126,8 @@ const processLogo = (
 
     // Step 3: Create outline by drawing logo multiple times with offset
     const outlineCanvas = document.createElement('canvas')
-    outlineCanvas.width = finalSize
-    outlineCanvas.height = finalSize
+    outlineCanvas.width = finalWidth
+    outlineCanvas.height = finalHeight
     const outlineCtx = outlineCanvas.getContext('2d')
     if (!outlineCtx) {
       resolve('')
@@ -124,7 +142,7 @@ const processLogo = (
           outlineCtx.drawImage(
             tempCanvas,
             0, 0, tempCanvas.width, tempCanvas.height,
-            outlineWidth + ox, outlineWidth + oy, size, size
+            outlineWidth + ox, outlineWidth + oy, scaledWidth, scaledHeight
           )
         }
       }
@@ -133,14 +151,14 @@ const processLogo = (
     // Turn the outline shape into white
     outlineCtx.globalCompositeOperation = 'source-in'
     outlineCtx.fillStyle = '#ffffff'
-    outlineCtx.fillRect(0, 0, finalSize, finalSize)
+    outlineCtx.fillRect(0, 0, finalWidth, finalHeight)
 
     // Step 4: Composite - first draw white outline, then logo on top
     finalCtx.drawImage(outlineCanvas, 0, 0)
     finalCtx.drawImage(
       tempCanvas,
       0, 0, tempCanvas.width, tempCanvas.height,
-      outlineWidth, outlineWidth, size, size
+      outlineWidth, outlineWidth, scaledWidth, scaledHeight
     )
 
     resolve(finalCanvas.toDataURL('image/png', 1.0))
@@ -196,7 +214,8 @@ export default function QRCodeGenerator() {
 
           await new Promise<void>((resolve) => {
             logoImg.onload = async () => {
-              const logoSize = 100
+              const baseSize = 100
+              const logoSize = baseSize * (selectedLogoOption.sizePercent / 100)
               const result = await processLogo(logoImg, logoSize, {
                 removeWhiteBg: true,
                 addOutline: true,
