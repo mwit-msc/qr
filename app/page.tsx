@@ -5,32 +5,46 @@ import QRCodeStyling, { type Options } from 'qr-code-styling'
 import { toast, Toaster } from 'react-hot-toast'
 import { Download, Copy, QrCode, ChevronDown, Check, Link2, Palette, Image as ImageIcon } from 'lucide-react'
 
-// Logo options - sizePercent controls logo size (100 = default, 200 = 2x larger, etc.)
-const logoOptions = [
-  { id: 'none', name: 'No Logo', path: null, description: 'Clean QR, no overlay', sizePercent: 100 },
-  { id: 'alvis', name: 'Alvis', path: '/logo_alvis.png', description: 'Default Alvis mark', sizePercent: 100 },
-  { id: 'openhouse2025', name: 'Open House 2025', path: '/logo_openhouse2025.png', description: 'Open House 2025 event', sizePercent: 100 },
-  { id: 'premwit2026', name: 'PRE-MWIT 2026', path: '/logo_premwit2026.png', description: 'PRE-MWIT 2026 event', sizePercent: 200 },
+// Logo options — sizePercent controls logo size (100 = default, 200 = 2x larger).
+// removeWhiteBg strips near-white pixels (good for logos on white); turn off for
+// artwork that is meant to keep its dark/starry background.
+// circleCrop masks the logo into a circle (for square badge artwork).
+type LogoOption = {
+  id: string
+  name: string
+  path: string | null
+  description: string
+  sizePercent: number
+  removeWhiteBg?: boolean
+  circleCrop?: boolean
+}
+
+const logoOptions: LogoOption[] = [
+  { id: 'none', name: 'ไม่มีโลโก้', path: null, description: 'QR โค้ดล้วน ไม่มีโลโก้', sizePercent: 100 },
+  { id: 'alvis', name: 'Alvis', path: '/logo_alvis.png', description: 'โลโก้ Alvis เริ่มต้น', sizePercent: 100 },
+  { id: 'openhouse2025', name: 'Open House 2025', path: '/logo_openhouse2025.png', description: 'งานโอเพนเฮาส์ 2025', sizePercent: 100 },
+  { id: 'premwit2026', name: 'PRE-MWIT 2026', path: '/logo_premwit2026.png', description: 'งานพรีมหิดล 2026', sizePercent: 200 },
+  { id: 'openhouse2026', name: 'Open House 2026', path: '/logo_openhouse2026.jpg', description: 'งานโอเพนเฮาส์ 2026', sizePercent: 130, removeWhiteBg: false, circleCrop: true },
 ]
 
-// QR Style options
+// QR module style options
 const qrStyleOptions = [
-  { id: 'square', name: 'Square', description: 'Classic square modules' },
-  { id: 'dots', name: 'Dots', description: 'Circular dot modules' },
-  { id: 'rounded', name: 'Rounded', description: 'Rounded square modules' },
-  { id: 'extra-rounded', name: 'Extra Rounded', description: 'Very rounded modules' },
-  { id: 'classy', name: 'Classy', description: 'Elegant classy style' },
-  { id: 'classy-rounded', name: 'Classy Rounded', description: 'Classy, rounded edges' },
+  { id: 'square', name: 'เหลี่ยม', description: 'โมดูลสี่เหลี่ยมคลาสสิก' },
+  { id: 'dots', name: 'จุด', description: 'โมดูลทรงกลม' },
+  { id: 'rounded', name: 'มน', description: 'สี่เหลี่ยมมุมมน' },
+  { id: 'extra-rounded', name: 'มนมาก', description: 'มุมมนพิเศษ' },
+  { id: 'classy', name: 'หรู', description: 'สไตล์เรียบหรู' },
+  { id: 'classy-rounded', name: 'หรูมน', description: 'เรียบหรู ขอบมน' },
 ]
 
 // Helper to process logo with options
 const processLogo = (
   logoImg: HTMLImageElement,
   maxSize: number,
-  options: { removeWhiteBg: boolean; addOutline: boolean; outlineWidth?: number }
+  options: { removeWhiteBg: boolean; addOutline: boolean; outlineWidth?: number; circleCrop?: boolean }
 ): Promise<string> => {
   return new Promise((resolve) => {
-    const { removeWhiteBg, addOutline, outlineWidth = 6 } = options
+    const { removeWhiteBg, addOutline, outlineWidth = 6, circleCrop = false } = options
 
     // Calculate scaled dimensions preserving aspect ratio
     const aspectRatio = logoImg.width / logoImg.height
@@ -69,6 +83,16 @@ const processLogo = (
         }
       }
       tempCtx.putImageData(imageData, 0, 0)
+    }
+
+    // Mask into a circle — corners become transparent
+    if (circleCrop) {
+      const radius = Math.min(tempCanvas.width, tempCanvas.height) / 2
+      tempCtx.globalCompositeOperation = 'destination-in'
+      tempCtx.beginPath()
+      tempCtx.arc(tempCanvas.width / 2, tempCanvas.height / 2, radius, 0, Math.PI * 2)
+      tempCtx.fill()
+      tempCtx.globalCompositeOperation = 'source-over'
     }
 
     // If no outline needed, just return scaled logo
@@ -198,9 +222,10 @@ export default function QRCodeGenerator() {
               const baseSize = 100
               const logoSize = baseSize * (selectedLogoOption.sizePercent / 100)
               const result = await processLogo(logoImg, logoSize, {
-                removeWhiteBg: true,
+                removeWhiteBg: selectedLogoOption.removeWhiteBg ?? true,
                 addOutline: true,
                 outlineWidth: 6,
+                circleCrop: selectedLogoOption.circleCrop ?? false,
               })
               if (result && result.length > 0) {
                 processedLogoUrl = result
@@ -208,7 +233,7 @@ export default function QRCodeGenerator() {
               resolve()
             }
             logoImg.onerror = () => {
-              toast.error(`Couldn't load ${selectedLogoOption.name}`)
+              toast.error(`โหลด ${selectedLogoOption.name} ไม่สำเร็จ`)
               resolve()
             }
             logoImg.src = selectedLogoOption.path!
@@ -297,7 +322,7 @@ export default function QRCodeGenerator() {
         }
       } catch (error) {
         console.error('Error generating QR code:', error)
-        toast.error('Couldn\'t generate the QR code. Try again.')
+        toast.error('สร้าง QR ไม่สำเร็จ ลองใหม่อีกครั้ง')
       } finally {
         setIsGenerating(false)
       }
@@ -320,7 +345,7 @@ export default function QRCodeGenerator() {
   const saveAsPNG = async () => {
     const blob = await getFinalBlob()
     if (!blob) {
-      toast.error('Nothing to save yet')
+      toast.error('ยังไม่มีโค้ดให้บันทึก')
       return
     }
 
@@ -328,8 +353,8 @@ export default function QRCodeGenerator() {
 
     if (isMobile() && navigator.share && navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ title: 'QR Code', text: 'Save this QR code to your photos', files: [file] })
-        toast.success('Share sheet opened — choose "Save to Photos"')
+        await navigator.share({ title: 'QR Code', text: 'บันทึก QR โค้ดนี้ลงรูปภาพ', files: [file] })
+        toast.success('เปิดเมนูแชร์แล้ว — เลือก "บันทึกลงรูปภาพ"')
         return
       } catch {
         // user cancelled or unsupported — fall through to direct download
@@ -344,13 +369,13 @@ export default function QRCodeGenerator() {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
-    toast.success('QR code saved')
+    toast.success('บันทึก QR โค้ดแล้ว')
   }
 
   const copyToClipboard = async () => {
     const blob = await getFinalBlob()
     if (!blob) {
-      toast.error('Nothing to copy yet')
+      toast.error('ยังไม่มีโค้ดให้คัดลอก')
       return
     }
 
@@ -359,26 +384,26 @@ export default function QRCodeGenerator() {
     if (isMobile()) {
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         try {
-          await navigator.share({ title: 'QR Code', text: 'Check out this QR code!', files: [file] })
-          toast.success('Shared')
+          await navigator.share({ title: 'QR Code', text: 'ดู QR โค้ดนี้สิ!', files: [file] })
+          toast.success('แชร์แล้ว')
           return
         } catch {
           // fall through to instructions
         }
       }
-      toast('Long-press the QR code above, then "Save to Photos"', { duration: 6000, icon: '💡' })
+      toast('กดค้างที่ QR โค้ดด้านบน แล้วเลือก "บันทึกลงรูปภาพ"', { duration: 6000, icon: '💡' })
       return
     }
 
     try {
       if (navigator.clipboard && 'write' in navigator.clipboard) {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-        toast.success('Copied to clipboard')
+        toast.success('คัดลอกไปยังคลิปบอร์ดแล้ว')
         return
       }
-      toast('Right-click the QR code, then "Copy image"', { duration: 5000, icon: '💡' })
+      toast('คลิกขวาที่ QR โค้ด แล้วเลือก "คัดลอกรูปภาพ"', { duration: 5000, icon: '💡' })
     } catch {
-      toast('Right-click the QR code, then "Copy image"', { duration: 5000, icon: '💡' })
+      toast('คลิกขวาที่ QR โค้ด แล้วเลือก "คัดลอกรูปภาพ"', { duration: 5000, icon: '💡' })
     }
   }
 
@@ -396,12 +421,7 @@ export default function QRCodeGenerator() {
   const currentLogo = logoOptions.find(l => l.id === selectedLogo)
 
   return (
-    <main className="module-grid relative h-screen w-full overflow-hidden text-text">
-      {/* Ambient glow, kept behind the QR only — no scattered blobs */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-[120px]"
-        style={{ background: 'radial-gradient(circle, rgba(255,182,39,0.16), rgba(63,169,255,0.10) 45%, transparent 70%)' }}
-      />
+    <main className="starfield relative h-screen w-full overflow-hidden text-text">
 
       <div className="relative z-10 flex h-full flex-col">
         {/* Top bar */}
@@ -411,7 +431,7 @@ export default function QRCodeGenerator() {
               <QrCode className="h-4 w-4 text-gold" />
             </div>
             <div className="leading-none">
-              <div className="text-sm font-semibold tracking-tight">QR Generator</div>
+              <div className="text-sm font-semibold tracking-tight">สร้าง QR โค้ด</div>
               <div className="eyebrow mt-1 text-muted">mwit.link</div>
             </div>
           </div>
@@ -430,19 +450,19 @@ export default function QRCodeGenerator() {
           <div className="rise grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-line bg-[var(--ink-2)]/70 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:grid-cols-[1fr_1.05fr]">
             {/* Left — controls */}
             <section className="border-b border-line p-6 sm:p-8 lg:border-b-0 lg:border-r">
-              <p className="eyebrow text-gold">Configure</p>
+              <p className="eyebrow text-gold">ตั้งค่า</p>
               <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
-                Build a QR code
+                สร้าง QR โค้ดของคุณ
               </h1>
               <p className="mt-1.5 text-sm text-muted">
-                Type a link, pick a look, drop in a logo. It renders as you go.
+                พิมพ์ลิงก์ เลือกสไตล์ ใส่โลโก้ แล้วดูผลได้ทันที
               </p>
 
               <div className="mt-7 space-y-6">
                 {/* Content */}
                 <div>
                   <label htmlFor="text-input" className="eyebrow mb-2 flex items-center gap-2 text-muted">
-                    <Link2 className="h-3.5 w-3.5" /> Content
+                    <Link2 className="h-3.5 w-3.5" /> เนื้อหา
                   </label>
                   <div className="relative">
                     <input
@@ -450,7 +470,7 @@ export default function QRCodeGenerator() {
                       type="text"
                       value={text}
                       onChange={(e) => setText(e.target.value)}
-                      placeholder="Paste a URL or any text…"
+                      placeholder="วางลิงก์ หรือข้อความใดก็ได้…"
                       className="w-full rounded-xl border border-line bg-[var(--panel)] px-4 py-3 text-sm text-text outline-none transition-colors placeholder:text-muted/70 focus:border-gold/60"
                     />
                     {isGenerating && (
@@ -464,7 +484,7 @@ export default function QRCodeGenerator() {
                 {/* Style */}
                 <div>
                   <label className="eyebrow mb-2 flex items-center gap-2 text-muted">
-                    <Palette className="h-3.5 w-3.5" /> Module style
+                    <Palette className="h-3.5 w-3.5" /> สไตล์โมดูล
                   </label>
                   <div className="relative" ref={styleDropdownRef}>
                     <button
@@ -472,7 +492,7 @@ export default function QRCodeGenerator() {
                       onClick={() => setIsStyleDropdownOpen(!isStyleDropdownOpen)}
                       className="flex w-full items-center justify-between rounded-xl border border-line bg-[var(--panel)] px-4 py-3 text-sm text-text transition-colors hover:border-line-strong"
                     >
-                      <span>{currentStyle?.name ?? 'Select style'}</span>
+                      <span>{currentStyle?.name ?? 'เลือกสไตล์'}</span>
                       <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${isStyleDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {isStyleDropdownOpen && (
@@ -499,7 +519,7 @@ export default function QRCodeGenerator() {
                 {/* Logo */}
                 <div>
                   <label className="eyebrow mb-2 flex items-center gap-2 text-muted">
-                    <ImageIcon className="h-3.5 w-3.5" /> Center logo
+                    <ImageIcon className="h-3.5 w-3.5" /> โลโก้ตรงกลาง
                   </label>
                   <div className="relative" ref={logoDropdownRef}>
                     <button
@@ -514,7 +534,7 @@ export default function QRCodeGenerator() {
                             <img src={currentLogo.path} alt="" className="h-4 w-4 object-contain" />
                           </span>
                         )}
-                        {currentLogo?.name ?? 'Select logo'}
+                        {currentLogo?.name ?? 'เลือกโลโก้'}
                       </span>
                       <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${isLogoDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -551,7 +571,7 @@ export default function QRCodeGenerator() {
 
             {/* Right — preview */}
             <section className="flex flex-col items-center justify-center gap-6 bg-[var(--ink)]/40 p-6 sm:p-8">
-              <p className="eyebrow self-start text-sky">Preview</p>
+              <p className="eyebrow self-start text-sky">ตัวอย่าง</p>
 
               {/* Scanner viewport */}
               <div className="relative aspect-square w-full max-w-[300px]">
@@ -581,14 +601,14 @@ export default function QRCodeGenerator() {
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-line text-muted">
                       <QrCode className="h-10 w-10 opacity-40" />
-                      <p className="text-sm">Type something to start</p>
+                      <p className="text-sm">พิมพ์เพื่อเริ่มสร้าง</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {isMobile() && qrCodeUrl && (
-                <p className="text-center text-xs text-muted">Long-press the code to save to Photos</p>
+                <p className="text-center text-xs text-muted">กดค้างที่โค้ดเพื่อบันทึกลงรูปภาพ</p>
               )}
 
               {/* Actions */}
@@ -599,7 +619,7 @@ export default function QRCodeGenerator() {
                   className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[#1a1200] shadow-[0_10px_30px_-10px_rgba(255,182,39,0.6)] transition-all hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Download className="h-4 w-4" />
-                  {isMobile() ? 'Save' : 'Download'}
+                  {isMobile() ? 'บันทึก' : 'ดาวน์โหลด'}
                 </button>
                 <button
                   onClick={copyToClipboard}
@@ -607,7 +627,7 @@ export default function QRCodeGenerator() {
                   className="group flex flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong bg-white/5 px-5 py-3 text-sm font-semibold text-text transition-all hover:bg-white/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Copy className="h-4 w-4" />
-                  {isMobile() ? 'Share' : 'Copy'}
+                  {isMobile() ? 'แชร์' : 'คัดลอก'}
                 </button>
               </div>
             </section>
