@@ -421,7 +421,9 @@ export default function QRCodeGenerator() {
   const currentLogo = logoOptions.find(l => l.id === selectedLogo)
 
   return (
-    <main className="starfield relative h-screen w-full overflow-hidden text-text">
+    <main className="cosmic-bg relative h-screen w-full overflow-hidden text-text">
+      {/* Faint science-doodle texture behind everything */}
+      <div className="doodle-layer pointer-events-none absolute inset-0" />
 
       <div className="relative z-10 flex h-full flex-col">
         {/* Top bar */}
@@ -447,7 +449,7 @@ export default function QRCodeGenerator() {
 
         {/* Console */}
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-6 sm:px-8">
-          <div className="rise grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-line bg-[var(--ink-2)]/70 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:grid-cols-[1fr_1.05fr]">
+          <div className="rise grid w-full max-w-5xl grid-cols-1 rounded-3xl border border-line bg-[var(--ink-2)]/70 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:grid-cols-[1fr_1.05fr]">
             {/* Left — controls */}
             <section className="border-b border-line p-6 sm:p-8 lg:border-b-0 lg:border-r">
               <p className="eyebrow text-gold">ตั้งค่า</p>
@@ -570,7 +572,7 @@ export default function QRCodeGenerator() {
             </section>
 
             {/* Right — preview */}
-            <section className="flex flex-col items-center justify-center gap-6 bg-[var(--ink)]/40 p-6 sm:p-8">
+            <section className="flex flex-col items-center justify-center gap-6 rounded-b-3xl bg-[var(--ink)]/40 p-6 sm:p-8 lg:rounded-b-none lg:rounded-r-3xl">
               <p className="eyebrow self-start text-sky">ตัวอย่าง</p>
 
               {/* Scanner viewport */}

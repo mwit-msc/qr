@@ -46,22 +46,32 @@ body {
   overflow: hidden;
 }
 
-/* Cosmic backdrop — deep violet-black space with a scatter of stars.
-   Single-hue nebula wash, no clashing gradients. */
-.starfield {
+/* Cosmic backdrop — deep violet-black with a single-hue nebula wash + a
+   faint scatter of stars. No clashing gradients. */
+.cosmic-bg {
   background-color: #05040a;
   background-image:
-    radial-gradient(1.2px 1.2px at 12% 22%, rgba(255, 255, 255, 0.85), transparent),
-    radial-gradient(1px 1px at 28% 68%, rgba(255, 255, 255, 0.55), transparent),
-    radial-gradient(1.4px 1.4px at 46% 14%, rgba(255, 235, 200, 0.8), transparent),
-    radial-gradient(1px 1px at 62% 82%, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1.2px 1.2px at 78% 36%, rgba(210, 220, 255, 0.75), transparent),
-    radial-gradient(1px 1px at 88% 74%, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1px 1px at 8% 88%, rgba(255, 255, 255, 0.45), transparent),
-    radial-gradient(1.3px 1.3px at 70% 8%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(60, 40, 100, 0.45), transparent 70%),
-    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(120, 60, 30, 0.28), transparent 70%);
+    radial-gradient(1.2px 1.2px at 12% 22%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 28% 68%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.4px 1.4px at 46% 14%, rgba(255, 235, 200, 0.75), transparent),
+    radial-gradient(1px 1px at 62% 82%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1.2px 1.2px at 78% 36%, rgba(210, 220, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 88% 74%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1.3px 1.3px at 70% 8%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(70, 45, 110, 0.45), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(120, 60, 30, 0.26), transparent 70%);
   background-repeat: no-repeat;
+}
+
+/* Science doodle texture — the original light-on-white asset, inverted to
+   read as faint light line-art on the dark backdrop. */
+.doodle-layer {
+  background-image: url('/coverbg.png');
+  background-size: cover;
+  background-position: center;
+  filter: invert(1) contrast(1.35) brightness(0.85);
+  opacity: 0.55;
+  mix-blend-mode: screen;
 }
 
 .eyebrow {
