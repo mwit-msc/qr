@@ -3,38 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCodeStyling, { type Options } from 'qr-code-styling'
 import { toast, Toaster } from 'react-hot-toast'
-import { Download, Copy, QrCode, Sparkles, ChevronDown } from 'lucide-react'
+import { Download, Copy, QrCode, ChevronDown, Check, Link2, Palette, Image as ImageIcon } from 'lucide-react'
 
 // Logo options - sizePercent controls logo size (100 = default, 200 = 2x larger, etc.)
 const logoOptions = [
-  {
-    id: 'none',
-    name: 'No Logo',
-    path: null,
-    description: 'QR code without logo overlay',
-    sizePercent: 100
-  },
-  {
-    id: 'alvis',
-    name: 'Alvis Logo',
-    path: '/logo_alvis.png',
-    description: 'Default Alvis logo',
-    sizePercent: 100
-  },
-  {
-    id: 'openhouse2025',
-    name: 'Open House 2025 Logo',
-    path: '/logo_openhouse2025.png',
-    description: 'Open House 2025 event logo',
-    sizePercent: 100
-  },
-  {
-    id: 'premwit2026',
-    name: 'PRE-MWIT 2026 Logo',
-    path: '/logo_premwit2026.png',
-    description: 'PRE-MWIT 2026 Logo',
-    sizePercent: 200
-  }
+  { id: 'none', name: 'No Logo', path: null, description: 'Clean QR, no overlay', sizePercent: 100 },
+  { id: 'alvis', name: 'Alvis', path: '/logo_alvis.png', description: 'Default Alvis mark', sizePercent: 100 },
+  { id: 'openhouse2025', name: 'Open House 2025', path: '/logo_openhouse2025.png', description: 'Open House 2025 event', sizePercent: 100 },
+  { id: 'premwit2026', name: 'PRE-MWIT 2026', path: '/logo_premwit2026.png', description: 'PRE-MWIT 2026 event', sizePercent: 200 },
 ]
 
 // QR Style options
@@ -44,7 +20,7 @@ const qrStyleOptions = [
   { id: 'rounded', name: 'Rounded', description: 'Rounded square modules' },
   { id: 'extra-rounded', name: 'Extra Rounded', description: 'Very rounded modules' },
   { id: 'classy', name: 'Classy', description: 'Elegant classy style' },
-  { id: 'classy-rounded', name: 'Classy Rounded', description: 'Classy with rounded edges' },
+  { id: 'classy-rounded', name: 'Classy Rounded', description: 'Classy, rounded edges' },
 ]
 
 // Helper to process logo with options
@@ -60,11 +36,9 @@ const processLogo = (
     const aspectRatio = logoImg.width / logoImg.height
     let scaledWidth: number, scaledHeight: number
     if (aspectRatio >= 1) {
-      // Wider than tall
       scaledWidth = maxSize
       scaledHeight = Math.round(maxSize / aspectRatio)
     } else {
-      // Taller than wide
       scaledHeight = maxSize
       scaledWidth = Math.round(maxSize * aspectRatio)
     }
@@ -134,7 +108,6 @@ const processLogo = (
       return
     }
 
-    // Draw expanded version for outline
     for (let ox = -outlineWidth; ox <= outlineWidth; ox++) {
       for (let oy = -outlineWidth; oy <= outlineWidth; oy++) {
         const dist = Math.sqrt(ox * ox + oy * oy)
@@ -165,6 +138,10 @@ const processLogo = (
   })
 }
 
+const isMobile = () =>
+  typeof navigator !== 'undefined' &&
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 export default function QRCodeGenerator() {
   const [text, setText] = useState('https://mwit.ac.th')
   const [qrCodeUrl, setQrCodeUrl] = useState('')
@@ -176,7 +153,9 @@ export default function QRCodeGenerator() {
   const logoDropdownRef = useRef<HTMLDivElement>(null)
   const styleDropdownRef = useRef<HTMLDivElement>(null)
   const qrRef = useRef<QRCodeStyling | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  // Holds the FINAL rendered image (QR + composited logo). Copy/Download read from here
+  // so the exported file matches exactly what's shown on screen.
+  const finalBlobRef = useRef<Blob | null>(null)
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -188,16 +167,18 @@ export default function QRCodeGenerator() {
         setIsStyleDropdownOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   // Generate QR code
   useEffect(() => {
+    let objectUrl: string | null = null
+
     const generateQR = async () => {
       if (!text.trim()) {
         setQrCodeUrl('')
+        finalBlobRef.current = null
         return
       }
 
@@ -219,7 +200,7 @@ export default function QRCodeGenerator() {
               const result = await processLogo(logoImg, logoSize, {
                 removeWhiteBg: true,
                 addOutline: true,
-                outlineWidth: 6
+                outlineWidth: 6,
               })
               if (result && result.length > 0) {
                 processedLogoUrl = result
@@ -227,7 +208,7 @@ export default function QRCodeGenerator() {
               resolve()
             }
             logoImg.onerror = () => {
-              toast.error(`Failed to load ${selectedLogoOption.name}`)
+              toast.error(`Couldn't load ${selectedLogoOption.name}`)
               resolve()
             }
             logoImg.src = selectedLogoOption.path!
@@ -241,15 +222,15 @@ export default function QRCodeGenerator() {
           data: text,
           margin: 10,
           dotsOptions: {
-            color: '#1e293b',
+            color: '#0b1220',
             type: selectedStyle as NonNullable<Options['dotsOptions']>['type'],
           },
           cornersSquareOptions: {
-            color: '#1e293b',
+            color: '#0b1220',
             type: selectedStyle === 'dots' ? 'dot' : selectedStyle === 'extra-rounded' ? 'extra-rounded' : 'square',
           },
           cornersDotOptions: {
-            color: '#1e293b',
+            color: '#0b1220',
             type: selectedStyle === 'dots' ? 'dot' : 'square',
           },
           backgroundOptions: {
@@ -257,22 +238,21 @@ export default function QRCodeGenerator() {
           },
         }
 
-        // Create QR code instance (without image - we'll add it manually)
         const qrCode = new QRCodeStyling(options)
         qrRef.current = qrCode
 
-        // Get QR as blob and convert to canvas for manual logo compositing
+        // Render QR to a blob
         const blob = await qrCode.getRawData('png')
         if (blob) {
-          // If no logo, just use the QR code directly
           if (!processedLogoUrl) {
-            const url = URL.createObjectURL(blob as Blob)
-            setQrCodeUrl(url)
+            // No logo — the raw QR IS the final image
+            finalBlobRef.current = blob as Blob
+            objectUrl = URL.createObjectURL(blob as Blob)
+            setQrCodeUrl(objectUrl)
           } else {
-            // Manually composite logo on top of QR code
+            // Composite the logo onto the QR, then keep the composited blob as the final image
             const qrImg = new Image()
             const logoImg = new Image()
-
             const qrUrl = URL.createObjectURL(blob as Blob)
 
             await new Promise<void>((resolve) => {
@@ -281,37 +261,31 @@ export default function QRCodeGenerator() {
                 loaded++
                 if (loaded === 2) resolve()
               }
-
               qrImg.onload = checkDone
               logoImg.onload = checkDone
               qrImg.onerror = checkDone
               logoImg.onerror = checkDone
-
               qrImg.src = qrUrl
               logoImg.src = processedLogoUrl!
             })
 
-            // Create final canvas
             const finalCanvas = document.createElement('canvas')
             finalCanvas.width = 400
             finalCanvas.height = 400
             const ctx = finalCanvas.getContext('2d')
 
             if (ctx) {
-              // Draw QR code
               ctx.drawImage(qrImg, 0, 0, 400, 400)
-
-              // Draw logo in center (use actual image dimensions)
               const x = (400 - logoImg.width) / 2
               const y = (400 - logoImg.height) / 2
               ctx.drawImage(logoImg, x, y)
 
-              // Convert to blob URL
               await new Promise<void>((resolve) => {
                 finalCanvas.toBlob((finalBlob) => {
                   if (finalBlob) {
-                    const url = URL.createObjectURL(finalBlob)
-                    setQrCodeUrl(url)
+                    finalBlobRef.current = finalBlob
+                    objectUrl = URL.createObjectURL(finalBlob)
+                    setQrCodeUrl(objectUrl)
                   }
                   resolve()
                 }, 'image/png', 1.0)
@@ -321,212 +295,200 @@ export default function QRCodeGenerator() {
             URL.revokeObjectURL(qrUrl)
           }
         }
-
-        setIsGenerating(false)
       } catch (error) {
         console.error('Error generating QR code:', error)
-        toast.error('Failed to generate QR code')
+        toast.error('Couldn\'t generate the QR code. Try again.')
+      } finally {
         setIsGenerating(false)
       }
     }
 
     const timeoutId = setTimeout(generateQR, 300)
-    return () => clearTimeout(timeoutId)
+    return () => {
+      clearTimeout(timeoutId)
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
   }, [text, selectedLogo, selectedStyle])
 
-  const isMobile = () => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  // Single source of truth for the exported image — always the composited final blob.
+  const getFinalBlob = async (): Promise<Blob | null> => {
+    if (finalBlobRef.current) return finalBlobRef.current
+    if (qrRef.current) return (await qrRef.current.getRawData('png')) as Blob | null
+    return null
   }
 
   const saveAsPNG = async () => {
-    if (!qrRef.current) {
-      toast.error('No QR code to save')
+    const blob = await getFinalBlob()
+    if (!blob) {
+      toast.error('Nothing to save yet')
       return
     }
 
-    if (isMobile()) {
-      if (navigator.share) {
-        try {
-          const blob = await qrRef.current.getRawData('png')
-          if (blob) {
-            const file = new File([blob as Blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
-            await navigator.share({
-              title: 'QR Code',
-              text: 'Save this QR code to your photos',
-              files: [file]
-            })
-            toast.success('Share menu opened! Choose "Save to Photos"')
-            return
-          }
-        } catch {
-          // Fall through to download
-        }
+    const file = new File([blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
+
+    if (isMobile() && navigator.share && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ title: 'QR Code', text: 'Save this QR code to your photos', files: [file] })
+        toast.success('Share sheet opened — choose "Save to Photos"')
+        return
+      } catch {
+        // user cancelled or unsupported — fall through to direct download
       }
     }
 
-    qrRef.current.download({ name: `qrcode-${Date.now()}`, extension: 'png' })
-    toast.success(isMobile() ? 'File downloaded! Check your Downloads folder' : 'QR code saved successfully!')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = file.name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    toast.success('QR code saved')
   }
 
   const copyToClipboard = async () => {
-    if (!qrCodeUrl) {
-      toast.error('No QR code to copy')
+    const blob = await getFinalBlob()
+    if (!blob) {
+      toast.error('Nothing to copy yet')
       return
     }
 
+    const file = new File([blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
+
     if (isMobile()) {
-      if (navigator.share && qrRef.current) {
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
         try {
-          const blob = await qrRef.current.getRawData('png')
-          if (blob) {
-            const file = new File([blob as Blob], `qrcode-${Date.now()}.png`, { type: 'image/png' })
-            await navigator.share({
-              title: 'QR Code',
-              text: 'Check out this QR code!',
-              files: [file]
-            })
-            toast.success('Shared successfully!')
-            return
-          }
+          await navigator.share({ title: 'QR Code', text: 'Check out this QR code!', files: [file] })
+          toast.success('Shared')
+          return
         } catch {
-          // Fall through to instructions
+          // fall through to instructions
         }
       }
-
-      toast('Long press the QR code image above and select "Save to Photos"', {
-        duration: 6000,
-        icon: '\uD83D\uDCA1'
-      })
+      toast('Long-press the QR code above, then "Save to Photos"', { duration: 6000, icon: '💡' })
       return
     }
 
     try {
-      if (navigator.clipboard && navigator.clipboard.write && qrRef.current) {
-        const blob = await qrRef.current.getRawData('png')
-        if (blob) {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob as Blob })])
-          toast.success('QR code copied to clipboard!')
-          return
-        }
+      if (navigator.clipboard && 'write' in navigator.clipboard) {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+        toast.success('Copied to clipboard')
+        return
       }
-      toast('Right-click the QR code image and select "Copy image"', {
-        duration: 5000,
-        icon: '\uD83D\uDCA1'
-      })
+      toast('Right-click the QR code, then "Copy image"', { duration: 5000, icon: '💡' })
     } catch {
-      toast('Right-click the QR code image and select "Copy image"', {
-        duration: 5000,
-        icon: '\uD83D\uDCA1'
-      })
+      toast('Right-click the QR code, then "Copy image"', { duration: 5000, icon: '💡' })
     }
   }
 
   const handleLogoSelect = (logoId: string) => {
     setSelectedLogo(logoId)
     setIsLogoDropdownOpen(false)
-    const option = logoOptions.find(logo => logo.id === logoId)
-    if (option) toast.success(`${option.name} selected!`)
   }
 
   const handleStyleSelect = (styleId: string) => {
     setSelectedStyle(styleId)
     setIsStyleDropdownOpen(false)
-    const option = qrStyleOptions.find(s => s.id === styleId)
-    if (option) toast.success(`${option.name} style selected!`)
   }
 
+  const currentStyle = qrStyleOptions.find(s => s.id === selectedStyle)
+  const currentLogo = logoOptions.find(l => l.id === selectedLogo)
+
   return (
-    <div
-      className="h-screen relative overflow-hidden"
-      style={{
-        backgroundImage: 'url(/coverbg.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-b via-transparent from-blue-500/60 to-yellow-300/60 pointer-events-none"></div>
+    <main className="module-grid relative h-screen w-full overflow-hidden text-text">
+      {/* Ambient glow, kept behind the QR only — no scattered blobs */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-[120px]"
+        style={{ background: 'radial-gradient(circle, rgba(255,182,39,0.16), rgba(63,169,255,0.10) 45%, transparent 70%)' }}
+      />
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-yellow-200/20 to-blue-300/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-200/20 to-yellow-300/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      <div className="h-full flex flex-col relative z-10">
-        <div className="container mx-auto px-4 py-3 max-w-4xl flex flex-col min-h-0">
-          <div className="text-center mb-3">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="relative">
-                <QrCode className="w-8 h-8 text-slate-800 drop-shadow-lg" />
-                <Sparkles className="w-4 h-4 text-amber-600 absolute -top-1 -right-1 animate-pulse drop-shadow-lg" />
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 drop-shadow-lg">
-                QR Generator
-              </h1>
+      <div className="relative z-10 flex h-full flex-col">
+        {/* Top bar */}
+        <header className="flex items-center justify-between px-5 py-4 sm:px-8">
+          <div className="flex items-center gap-2.5">
+            <div className="grid h-8 w-8 place-items-center rounded-lg border border-line bg-panel">
+              <QrCode className="h-4 w-4 text-gold" />
+            </div>
+            <div className="leading-none">
+              <div className="text-sm font-semibold tracking-tight">QR Generator</div>
+              <div className="eyebrow mt-1 text-muted">mwit.link</div>
             </div>
           </div>
+          <a
+            href="https://mwit.ac.th"
+            target="_blank"
+            rel="noreferrer"
+            className="eyebrow rounded-full border border-line px-3 py-1.5 text-muted transition-colors hover:border-line-strong hover:text-text"
+          >
+            MWIT
+          </a>
+        </header>
 
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/60 p-4 mb-3 hover:shadow-2xl transition-all duration-500 relative z-20 flex-1 flex flex-col min-h-0">
-            <div className="space-y-3">
-              {/* Text Input */}
-              <div>
-                <label htmlFor="text-input" className="text-base font-semibold text-slate-800 flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-gradient-to-r from-sky-500 to-blue-500 rounded-full"></div>
-                  Enter your content
-                </label>
-                <div className="relative">
-                  <input
-                    id="text-input"
-                    type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Enter text, URL, or any content to generate QR code..."
-                    className="w-full text-sm py-2.5 px-4 border-2 border-slate-200 focus:border-blue-500 rounded-xl bg-white shadow-inner transition-all duration-300 hover:shadow-md focus:shadow-lg focus:outline-none text-slate-900"
-                  />
-                  {isGenerating && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
-                </div>
-              </div>
+        {/* Console */}
+        <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-6 sm:px-8">
+          <div className="rise grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-line bg-[var(--ink-2)]/70 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] backdrop-blur-xl lg:grid-cols-[1fr_1.05fr]">
+            {/* Left — controls */}
+            <section className="border-b border-line p-6 sm:p-8 lg:border-b-0 lg:border-r">
+              <p className="eyebrow text-gold">Configure</p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
+                Build a QR code
+              </h1>
+              <p className="mt-1.5 text-sm text-muted">
+                Type a link, pick a look, drop in a logo. It renders as you go.
+              </p>
 
-              {/* Two dropdowns in a row */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* QR Style Dropdown */}
+              <div className="mt-7 space-y-6">
+                {/* Content */}
                 <div>
-                  <label className="text-base font-semibold text-slate-800 flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
-                    QR Style
+                  <label htmlFor="text-input" className="eyebrow mb-2 flex items-center gap-2 text-muted">
+                    <Link2 className="h-3.5 w-3.5" /> Content
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="text-input"
+                      type="text"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder="Paste a URL or any text…"
+                      className="w-full rounded-xl border border-line bg-[var(--panel)] px-4 py-3 text-sm text-text outline-none transition-colors placeholder:text-muted/70 focus:border-gold/60"
+                    />
+                    {isGenerating && (
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Style */}
+                <div>
+                  <label className="eyebrow mb-2 flex items-center gap-2 text-muted">
+                    <Palette className="h-3.5 w-3.5" /> Module style
                   </label>
                   <div className="relative" ref={styleDropdownRef}>
                     <button
                       type="button"
                       onClick={() => setIsStyleDropdownOpen(!isStyleDropdownOpen)}
-                      className="w-full text-sm py-2.5 px-4 border-2 border-slate-200 hover:border-purple-400 focus:border-purple-500 rounded-xl bg-white shadow-inner transition-all duration-300 hover:shadow-md focus:shadow-lg focus:outline-none text-slate-900 flex items-center justify-between"
+                      className="flex w-full items-center justify-between rounded-xl border border-line bg-[var(--panel)] px-4 py-3 text-sm text-text transition-colors hover:border-line-strong"
                     >
-                      <span>{qrStyleOptions.find(s => s.id === selectedStyle)?.name || 'Select Style'}</span>
-                      <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isStyleDropdownOpen ? 'rotate-180' : ''}`} />
+                      <span>{currentStyle?.name ?? 'Select style'}</span>
+                      <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${isStyleDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
-
                     {isStyleDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-xl z-[999] max-h-48 overflow-y-auto">
+                      <div className="thin-scroll absolute left-0 right-0 top-full z-30 mt-2 max-h-56 overflow-y-auto rounded-xl border border-line bg-[var(--panel-2)] p-1.5 shadow-2xl">
                         {qrStyleOptions.map((style) => (
                           <button
                             key={style.id}
                             type="button"
                             onClick={() => handleStyleSelect(style.id)}
-                            className={`w-full text-left px-3 py-2 hover:bg-slate-50 active:bg-slate-100 transition-colors duration-200 flex items-center gap-2 border-b border-slate-100 last:border-b-0 cursor-pointer ${
-                              selectedStyle === style.id ? 'bg-purple-50 border-purple-200' : ''
-                            }`}
+                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-white/5 ${selectedStyle === style.id ? 'bg-white/5' : ''}`}
                           >
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm text-slate-900">{style.name}</div>
-                              <div className="text-xs text-slate-500 truncate">{style.description}</div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-text">{style.name}</div>
+                              <div className="truncate text-xs text-muted">{style.description}</div>
                             </div>
-                            {selectedStyle === style.id && (
-                              <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
-                            )}
+                            {selectedStyle === style.id && <Check className="h-4 w-4 flex-shrink-0 text-gold" />}
                           </button>
                         ))}
                       </div>
@@ -534,72 +496,50 @@ export default function QRCodeGenerator() {
                   </div>
                 </div>
 
-                {/* Logo Selection Dropdown */}
+                {/* Logo */}
                 <div>
-                  <label className="text-base font-semibold text-slate-800 flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></div>
-                    Logo Overlay
+                  <label className="eyebrow mb-2 flex items-center gap-2 text-muted">
+                    <ImageIcon className="h-3.5 w-3.5" /> Center logo
                   </label>
                   <div className="relative" ref={logoDropdownRef}>
                     <button
                       type="button"
                       onClick={() => setIsLogoDropdownOpen(!isLogoDropdownOpen)}
-                      className="w-full text-sm py-2.5 px-4 border-2 border-slate-200 hover:border-amber-400 focus:border-amber-500 rounded-xl bg-white shadow-inner transition-all duration-300 hover:shadow-md focus:shadow-lg focus:outline-none text-slate-900 flex items-center justify-between"
+                      className="flex w-full items-center justify-between rounded-xl border border-line bg-[var(--panel)] px-4 py-3 text-sm text-text transition-colors hover:border-line-strong"
                     >
-                      <div className="flex items-center gap-2">
-                        {selectedLogo !== 'none' && logoOptions.find(logo => logo.id === selectedLogo)?.path && (
-                          <div className="w-5 h-5 bg-slate-100 rounded border flex items-center justify-center">
-                            <img
-                              src={logoOptions.find(logo => logo.id === selectedLogo)?.path || ''}
-                              alt=""
-                              className="w-3 h-3 object-contain"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.style.display = 'none'
-                              }}
-                            />
-                          </div>
+                      <span className="flex items-center gap-2.5">
+                        {currentLogo?.path && (
+                          <span className="grid h-6 w-6 place-items-center rounded-md bg-white/90">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={currentLogo.path} alt="" className="h-4 w-4 object-contain" />
+                          </span>
                         )}
-                        <span>{logoOptions.find(logo => logo.id === selectedLogo)?.name || 'Select Logo'}</span>
-                      </div>
-                      <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isLogoDropdownOpen ? 'rotate-180' : ''}`} />
+                        {currentLogo?.name ?? 'Select logo'}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${isLogoDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
-
                     {isLogoDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-xl z-[999] max-h-48 overflow-y-auto">
+                      <div className="thin-scroll absolute left-0 right-0 top-full z-30 mt-2 max-h-56 overflow-y-auto rounded-xl border border-line bg-[var(--panel-2)] p-1.5 shadow-2xl">
                         {logoOptions.map((logo) => (
                           <button
                             key={logo.id}
                             type="button"
                             onClick={() => handleLogoSelect(logo.id)}
-                            className={`w-full text-left px-3 py-2 hover:bg-slate-50 active:bg-slate-100 transition-colors duration-200 flex items-center gap-2 border-b border-slate-100 last:border-b-0 cursor-pointer ${
-                              selectedLogo === logo.id ? 'bg-amber-50 border-amber-200' : ''
-                            }`}
+                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-white/5 ${selectedLogo === logo.id ? 'bg-white/5' : ''}`}
                           >
-                            {logo.path ? (
-                              <div className="w-6 h-6 bg-slate-100 rounded border flex items-center justify-center flex-shrink-0">
-                                <img
-                                  src={logo.path}
-                                  alt={logo.name}
-                                  className="w-4 h-4 object-contain"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement
-                                    target.style.display = 'none'
-                                  }}
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 bg-slate-200 rounded border flex items-center justify-center flex-shrink-0">
-                                <QrCode className="w-3 h-3 text-slate-500" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm text-slate-900">{logo.name}</div>
-                              <div className="text-xs text-slate-500 truncate">{logo.description}</div>
+                            <span className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-md border border-line bg-white/90">
+                              {logo.path ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={logo.path} alt={logo.name} className="h-5 w-5 object-contain" />
+                              ) : (
+                                <QrCode className="h-4 w-4 text-slate-500" />
+                              )}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-text">{logo.name}</div>
+                              <div className="truncate text-xs text-muted">{logo.description}</div>
                             </div>
-                            {selectedLogo === logo.id && (
-                              <div className="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0"></div>
-                            )}
+                            {selectedLogo === logo.id && <Check className="h-4 w-4 flex-shrink-0 text-gold" />}
                           </button>
                         ))}
                       </div>
@@ -607,99 +547,96 @@ export default function QRCodeGenerator() {
                   </div>
                 </div>
               </div>
+            </section>
 
-            </div>
+            {/* Right — preview */}
+            <section className="flex flex-col items-center justify-center gap-6 bg-[var(--ink)]/40 p-6 sm:p-8">
+              <p className="eyebrow self-start text-sky">Preview</p>
 
-            <div className="pt-1"></div>
-            <div className="text-center flex flex-col min-h-0">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
-                Your QR Code
-              </h2>
+              {/* Scanner viewport */}
+              <div className="relative aspect-square w-full max-w-[300px]">
+                {/* Corner brackets — echo QR finder patterns */}
+                {[
+                  'left-0 top-0 border-l-2 border-t-2 rounded-tl-lg',
+                  'right-0 top-0 border-r-2 border-t-2 rounded-tr-lg',
+                  'left-0 bottom-0 border-l-2 border-b-2 rounded-bl-lg',
+                  'right-0 bottom-0 border-r-2 border-b-2 rounded-br-lg',
+                ].map((c, i) => (
+                  <span key={i} className={`pointer-events-none absolute h-7 w-7 border-gold/80 ${c}`} />
+                ))}
 
-              {qrCodeUrl ? (
-                <div className="flex flex-col space-y-2 items-center justify-center min-h-0">
-                  <div className="relative group flex-shrink-0">
-                    <div className="absolute -inset-2 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500"></div>
-                    <div className="relative p-3 bg-white rounded-2xl shadow-lg border border-slate-100">
+                <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl p-3">
+                  {qrCodeUrl ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={qrCodeUrl}
-                        alt="Generated QR Code"
-                        className="w-48 h-48 md:w-56 md:h-56 object-contain rounded-xl shadow-md select-none"
+                        alt="Generated QR code"
+                        className="h-full w-full select-none rounded-lg object-contain shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]"
                       />
-                      {isMobile() && (
-                        <div className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded-lg text-center opacity-75">
-                          Long press to save to photos
-                        </div>
+                      {isGenerating && (
+                        <span className="scanline pointer-events-none absolute inset-x-3 top-3 h-px bg-gold shadow-[0_0_12px_2px_rgba(255,182,39,0.7)]" />
                       )}
+                    </>
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-line text-muted">
+                      <QrCode className="h-10 w-10 opacity-40" />
+                      <p className="text-sm">Type something to start</p>
                     </div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <button
-                      onClick={saveAsPNG}
-                      className="group flex items-center justify-center gap-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      <Download className="w-4 h-4 group-hover:animate-bounce" />
-                      {isMobile() ? 'Save to Phone' : 'Save as PNG'}
-                    </button>
-                    <button
-                      onClick={copyToClipboard}
-                      className="group flex items-center justify-center gap-2 border-2 border-slate-300 hover:border-sky-400 hover:bg-sky-50 px-5 py-2.5 rounded-xl text-sm font-semibold bg-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 text-slate-700"
-                    >
-                      <Copy className="w-4 h-4 group-hover:animate-pulse" />
-                      {isMobile() ? 'Share/Copy' : 'Copy to Clipboard'}
-                    </button>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex items-center justify-center min-h-0">
-                  <div className="w-48 h-48 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-300 shadow-inner">
-                    <div className="text-center text-slate-500">
-                      <div className="relative mb-3">
-                        <QrCode className="w-12 h-12 mx-auto opacity-40" />
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full animate-ping opacity-50"></div>
-                      </div>
-                      <p className="text-base font-medium">Start typing to generate</p>
-                      <p className="text-xs mt-1 opacity-70">Your QR code will appear here</p>
-                    </div>
-                  </div>
-                </div>
+              </div>
+
+              {isMobile() && qrCodeUrl && (
+                <p className="text-center text-xs text-muted">Long-press the code to save to Photos</p>
               )}
-            </div>
+
+              {/* Actions */}
+              <div className="flex w-full max-w-[300px] flex-col gap-2.5 sm:flex-row">
+                <button
+                  onClick={saveAsPNG}
+                  disabled={!qrCodeUrl}
+                  className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[#1a1200] shadow-[0_10px_30px_-10px_rgba(255,182,39,0.6)] transition-all hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Download className="h-4 w-4" />
+                  {isMobile() ? 'Save' : 'Download'}
+                </button>
+                <button
+                  onClick={copyToClipboard}
+                  disabled={!qrCodeUrl}
+                  className="group flex flex-1 items-center justify-center gap-2 rounded-xl border border-line-strong bg-white/5 px-5 py-3 text-sm font-semibold text-text transition-all hover:bg-white/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Copy className="h-4 w-4" />
+                  {isMobile() ? 'Share' : 'Copy'}
+                </button>
+              </div>
+            </section>
           </div>
         </div>
-      </div>
 
-      <div ref={containerRef} className="hidden" />
+        <footer className="pb-4 text-center">
+          <p className="eyebrow text-muted/60">Made with care · mwit.link</p>
+        </footer>
+      </div>
 
       <Toaster
         position="bottom-center"
         toastOptions={{
           duration: 4000,
           style: {
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            color: '#1e293b',
-            border: '1px solid rgba(226, 232, 240, 0.5)',
-            borderRadius: '16px',
-            fontSize: '16px',
-            padding: '16px 20px',
+            background: 'rgba(18,26,43,0.92)',
+            backdropFilter: 'blur(12px)',
+            color: '#e8edf6',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '14px',
+            fontSize: '14px',
+            padding: '12px 16px',
             fontWeight: '500',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
           },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#ffffff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#ffffff',
-            },
-          },
+          success: { iconTheme: { primary: '#ffb627', secondary: '#121a2b' } },
+          error: { iconTheme: { primary: '#ef4444', secondary: '#121a2b' } },
         }}
       />
-    </div>
+    </main>
   )
 }
