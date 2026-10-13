@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "rm -rf out && next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test lib/qr-colors.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.23.0",

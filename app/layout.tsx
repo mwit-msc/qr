@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Thai } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const outfit = localFont({
+  src: "../public/fonts/Outfit.ttf",
+  variable: "--font-outfit",
+  weight: "100 900",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// Thai-capable face — browsers fall back to this per-glyph for Thai text,
-// keeping Latin in Geist and Thai legible.
-const notoThai = Noto_Sans_Thai({
+const notoThai = localFont({
+  src: "../public/fonts/NotoSansThai.ttf",
   variable: "--font-noto-thai",
-  subsets: ["thai", "latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -33,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoThai.variable} antialiased`}
+        className={`${outfit.variable} ${notoThai.variable} antialiased`}
       >
         {children}
       </body>
