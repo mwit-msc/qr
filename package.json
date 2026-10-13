@@ -7,28 +7,30 @@
     "build": "rm -rf out && next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --test lib/qr-colors.test.mjs"
+    "test": "node --test lib/qr-colors.test.mjs lib/qr-caption-layout.test.mjs",
+    "typecheck": "node node_modules/@typescript/native/bin/tsc --noEmit"
   },
   "dependencies": {
-    "lucide-react": "^1.23.0",
-    "next": "16.2.10",
+    "lucide-react": "^1.56.0",
+    "next": "16.4.0",
     "qr-code-styling": "^1.9.2",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "react-hot-toast": "^2.6.0"
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hot-toast": "^2.6.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
-    "@types/node": "^25.0.2",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "eslint": "^9.39.2",
-    "eslint-config-next": "^16.2.10",
-    "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3"
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "@typescript/native": "npm:typescript@^7.0.2"
   },
   "overrides": {
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
   }
 }

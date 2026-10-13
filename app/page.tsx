@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { readCustomLogo, renderQrCode, type LogoOption } from '@/lib/qr-renderer'
+import type { QrCaption } from '@/lib/qr-caption'
 import { normalizeHexColor, assessQrColors } from '@/lib/qr-colors.mjs'
 import { toast, Toaster } from 'react-hot-toast'
-import { Download, Copy, QrCode, Check, Link2, Palette, Image as ImageIcon, ArrowUpRight, LoaderCircle, Upload, X, RotateCcw, TriangleAlert } from 'lucide-react'
+import { Download, Copy, QrCode, Check, Link2, Palette, Image as ImageIcon, ArrowUpRight, LoaderCircle, Upload, X, RotateCcw, TriangleAlert, Type, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
 const logoOptions: LogoOption[] = [
   { id: 'none', name: 'ไม่มีโลโก้', path: null, description: 'QR โค้ดล้วน ไม่มีโลโก้', sizePercent: 100 },
@@ -38,7 +39,12 @@ export default function QRCodeGenerator() {
   const [foregroundInput, setForegroundInput] = useState('#0B1220')
   const [backgroundInput, setBackgroundInput] = useState('#FFFFFF')
   const [exportSize, setExportSize] = useState(400)
-  const [generatedCode, setGeneratedCode] = useState<{ key: string; url: string; blob: Blob; size: number } | null>(null)
+  const [captionEnabled, setCaptionEnabled] = useState(true)
+  const [captionTitle, setCaptionTitle] = useState('QR Code')
+  const [captionDescription, setCaptionDescription] = useState('mwit.link')
+  const [captionSize, setCaptionSize] = useState<QrCaption['size']>('medium')
+  const [captionAlignment, setCaptionAlignment] = useState<QrCaption['alignment']>('center')
+  const [generatedCode, setGeneratedCode] = useState<{ key: string; url: string; blob: Blob; width: number; height: number } | null>(null)
   const [generationError, setGenerationError] = useState<{ key: string; message: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const currentLogo = customLogo?.id === selectedLogo ? customLogo : logoOptions.find(logo => logo.id === selectedLogo)
@@ -46,7 +52,7 @@ export default function QRCodeGenerator() {
   const foreground = normalizeHexColor(foregroundInput)
   const background = normalizeHexColor(backgroundInput)
   const colorAssessment = foreground && background ? assessQrColors(foreground, background) : null
-  const renderKey = JSON.stringify([text, selectedLogo, selectedStyle, exportSize, foreground, background])
+  const renderKey = JSON.stringify([text, selectedLogo, selectedStyle, exportSize, foreground, background, captionEnabled, captionTitle, captionDescription, captionSize, captionAlignment])
   const currentError = generationError?.key === renderKey ? generationError.message : null
   const isGenerating = Boolean(text.trim() && foreground && background && generatedCode?.key !== renderKey && !currentError)
   const canExport = Boolean(text.trim() && foreground && background && generatedCode?.key === renderKey && !isUploading)
@@ -57,9 +63,11 @@ export default function QRCodeGenerator() {
     let cancelled = false
     const timeout = setTimeout(async () => {
       try {
-        const blob = await renderQrCode({ text, style: selectedStyle, logo: currentLogo, size: exportSize, foreground, background })
+        const rendered = await renderQrCode({ text, style: selectedStyle, logo: currentLogo, size: exportSize, foreground, background,
+          caption: { enabled: captionEnabled, title: captionTitle, description: captionDescription, size: captionSize, alignment: captionAlignment },
+        })
         if (cancelled) return
-        setGeneratedCode({ key: renderKey, url: URL.createObjectURL(blob), blob, size: exportSize })
+        setGeneratedCode({ key: renderKey, url: URL.createObjectURL(rendered.blob), ...rendered })
         setGenerationError(null)
       } catch (error) {
         if (cancelled) return
@@ -69,7 +77,7 @@ export default function QRCodeGenerator() {
       }
     }, 300)
     return () => { cancelled = true; clearTimeout(timeout) }
-  }, [text, selectedStyle, currentLogo, exportSize, foreground, background, renderKey])
+  }, [text, selectedStyle, currentLogo, exportSize, foreground, background, captionEnabled, captionTitle, captionDescription, captionSize, captionAlignment, renderKey])
 
   useEffect(() => {
     if (!generatedCode) return
@@ -202,6 +210,46 @@ export default function QRCodeGenerator() {
               <p className="field-help" id="content-help">QR โค้ดจะอัปเดตเมื่อคุณพิมพ์</p>
             </div>
 
+            <fieldset className="setting-section caption-section">
+              <legend className="field-label"><Type size={17} /> ข้อความใต้ QR โค้ด</legend>
+              <label className="caption-toggle"><input type="checkbox" checked={captionEnabled} onChange={event => setCaptionEnabled(event.target.checked)} />แสดงข้อความใต้โค้ด</label>
+              {captionEnabled && (
+                <div className="caption-controls">
+                  <div className="caption-text-field">
+                    <label htmlFor="caption-title">ชื่อ QR โค้ด</label>
+                    <input id="caption-title" type="text" value={captionTitle} maxLength={80} onChange={event => setCaptionTitle(event.target.value)} placeholder="เช่น Open House 2026" />
+                  </div>
+                  <div className="caption-text-field">
+                    <label htmlFor="caption-description">ข้อความเพิ่มเติม <span>ไม่บังคับ</span></label>
+                    <input id="caption-description" type="text" value={captionDescription} maxLength={120} onChange={event => setCaptionDescription(event.target.value)} placeholder="เช่น วันที่จัดงาน หรือคำอธิบายสั้น ๆ" />
+                  </div>
+                  <div className="caption-format-row">
+                    <fieldset className="caption-choice-group">
+                      <legend>ขนาดตัวอักษร</legend>
+                      <div className="caption-choices">
+                        {([{id:'small', name:'เล็ก'}, {id:'medium', name:'กลาง'}, {id:'large', name:'ใหญ่'}] as const).map(option => (
+                          <label key={option.id} className={captionSize === option.id ? 'selected' : ''}>
+                            <input type="radio" name="caption-size" value={option.id} checked={captionSize === option.id} onChange={() => setCaptionSize(option.id)} />{option.name}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <fieldset className="caption-choice-group">
+                      <legend>จัดตำแหน่ง</legend>
+                      <div className="caption-choices">
+                        {([{id:'left', name:'ซ้าย', Icon:AlignLeft}, {id:'center', name:'กลาง', Icon:AlignCenter}, {id:'right', name:'ขวา', Icon:AlignRight}] as const).map(({id,name,Icon}) => (
+                          <label key={id} className={captionAlignment === id ? 'selected' : ''}>
+                            <input type="radio" name="caption-alignment" value={id} checked={captionAlignment === id} onChange={() => setCaptionAlignment(id)} />
+                            <Icon size={15} aria-hidden="true" /><span className="sr-only">{name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  </div>
+                </div>
+              )}
+            </fieldset>
+
             <fieldset className="setting-section">
               <legend className="field-label"><Palette size={17} /> สไตล์โมดูล</legend>
               <div className="style-grid">
@@ -259,7 +307,7 @@ export default function QRCodeGenerator() {
                 {isUploading ? <LoaderCircle className="loading-icon" size={16} /> : <Upload size={16} />}
                 {isUploading ? 'กำลังโหลดโลโก้' : customLogo ? 'เปลี่ยนรูปโลโก้' : 'อัปโหลดโลโก้ของคุณ'}
               </button>
-              <p className="field-help" id="upload-help">PNG, JPG, WebP ไม่เกิน 5 MB · รูปอยู่ในเบราว์เซอร์ของคุณ</p>
+              <p className="field-help" id="upload-help">PNG, JPG, WebP ไม่เกิน 5 MB</p>
             </fieldset>
 
             <fieldset className="setting-section color-section">
@@ -271,7 +319,7 @@ export default function QRCodeGenerator() {
               {colorAssessment && (
                 <p className={`contrast-hint ${colorAssessment.lowContrast || colorAssessment.inverted ? 'contrast-warning' : ''}`} role="status">
                   {colorAssessment.lowContrast || colorAssessment.inverted ? <TriangleAlert size={16} /> : <Check size={16} />}
-                  <span>{colorAssessment.inverted ? 'แนะนำให้ใช้โค้ดสีเข้มบนพื้นหลังสีอ่อน' : colorAssessment.lowContrast ? 'สีใกล้กันเกินไป อาจสแกนได้ยาก' : 'สีตัดกันชัดเจน'}<small>ความต่างสี {colorAssessment.ratio.toFixed(1)}:1 · ลองสแกนก่อนนำไปใช้</small></span>
+                  <span>{colorAssessment.inverted ? 'แนะนำให้ใช้โค้ดสีเข้มบนพื้นหลังสีอ่อน' : colorAssessment.lowContrast ? 'สีใกล้กันเกินไป อาจสแกนได้ยาก' : 'สีตัดกันชัดเจน'}<small>ความต่างสี {colorAssessment.ratio.toFixed(1)}:1</small></span>
                 </p>
               )}
               <button className="reset-colors-button" type="button" onClick={() => { setForegroundInput('#0B1220'); setBackgroundInput('#FFFFFF') }}><RotateCcw size={13} />ใช้สีเริ่มต้น</button>
@@ -281,23 +329,24 @@ export default function QRCodeGenerator() {
           <section className="preview-panel" aria-labelledby="preview-heading">
             <div className="panel-heading">
               <h2 id="preview-heading">ตัวอย่าง</h2>
-              <span className={`preview-status ${canExport ? 'ready' : ''}`} role="status">
-                {isGenerating ? <LoaderCircle className="loading-icon" size={13} /> : <span className="status-dot" />}
-                {isUploading ? 'กำลังโหลดโลโก้' : isGenerating ? 'กำลังสร้าง' : !foreground || !background ? 'ตรวจสอบรหัสสี' : currentError ? 'สร้างไม่สำเร็จ' : canExport ? 'พร้อมใช้งาน' : 'พิมพ์เพื่อเริ่มสร้าง'}
-              </span>
+              {(isUploading || isGenerating || !foreground || !background || currentError) && (
+                <span className="preview-status" role="status">
+                  {(isUploading || isGenerating) && <LoaderCircle className="loading-icon" size={13} />}
+                  {isUploading ? 'กำลังโหลดโลโก้' : isGenerating ? 'กำลังสร้าง' : !foreground || !background ? 'ตรวจสอบรหัสสี' : 'สร้างไม่สำเร็จ'}
+                </span>
+              )}
             </div>
 
             <div className={`preview-stage ${isGenerating ? 'preview-updating' : ''}`} aria-busy={isGenerating}>
               <div className="qr-paper">
-                <div className="qr-image">
+                <div className="qr-image" style={{ aspectRatio: generatedCode ? `${generatedCode.width} / ${generatedCode.height}` : '1' }}>
                   {qrCodeUrl && text.trim() ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={qrCodeUrl} alt="QR โค้ดที่สร้างจากลิงก์หรือข้อความของคุณ" width={generatedCode?.size ?? 400} height={generatedCode?.size ?? 400} />
+                    <img src={qrCodeUrl} alt="QR โค้ดที่สร้างจากลิงก์หรือข้อความของคุณ" width={generatedCode?.width ?? 400} height={generatedCode?.height ?? 400} />
                   ) : (
                     <div className="empty-preview">{isGenerating ? <LoaderCircle className="loading-icon" size={32} /> : <QrCode size={52} strokeWidth={1} />}<p>{isGenerating ? 'กำลังสร้าง QR โค้ด' : 'พิมพ์เพื่อเริ่มสร้าง'}</p></div>
                   )}
                 </div>
-                <div className="paper-caption"><QrCode size={13} /><span>mwit.link</span><span>QR Code</span></div>
               </div>
             </div>
 
@@ -305,15 +354,15 @@ export default function QRCodeGenerator() {
               {currentError && <p className="render-error" role="alert">{currentError}</p>}
               <div className="preview-details">
                 <span className="file-icon"><ImageIcon size={19} strokeWidth={1.5} /></span>
-                <div><strong>QR Code</strong><span>PNG <span aria-hidden="true">·</span> {exportSize.toLocaleString()} × {exportSize.toLocaleString()} px</span></div>
+                <div><strong title={captionEnabled ? captionTitle : undefined}>{captionEnabled && captionTitle.trim() ? captionTitle : 'QR Code'}</strong><span>PNG <span aria-hidden="true">·</span> {generatedCode?.key === renderKey ? `${generatedCode.width.toLocaleString()} × ${generatedCode.height.toLocaleString()} px` : 'กำลังอัปเดตขนาด'}</span></div>
                 <span className="style-summary">{currentStyle?.name}</span>
               </div>
               <div className="export-size-field">
-                <label htmlFor="export-size">ขนาดรูปภาพ</label>
+                <label htmlFor="export-size">ความกว้างรูปภาพ</label>
                 <select id="export-size" value={exportSize} onChange={event => setExportSize(Number(event.target.value))}>
-                  <option value={400}>400 × 400 px</option>
-                  <option value={1024}>1,024 × 1,024 px</option>
-                  <option value={2048}>2,048 × 2,048 px</option>
+                  <option value={400}>400 px</option>
+                  <option value={1024}>1,024 px</option>
+                  <option value={2048}>2,048 px</option>
                 </select>
               </div>
               <button className="download-button" onClick={saveAsPNG} disabled={!canExport}>
@@ -322,12 +371,11 @@ export default function QRCodeGenerator() {
               <button className="copy-button" onClick={copyToClipboard} disabled={!canExport}>
                 <Copy size={16} />{isMobile() ? 'แชร์รูปภาพ' : 'คัดลอกรูปภาพ'}
               </button>
-              <p className="export-help">{isMobile() ? 'กดค้างที่โค้ดเพื่อบันทึกลงรูปภาพ' : 'สแกน QR โค้ดเพื่อตรวจสอบก่อนนำไปใช้'}</p>
             </div>
           </section>
         </div>
 
-        <footer className="site-footer"><span>สร้างด้วย MWIT LINK</span><a href="https://mwit.link" target="_blank" rel="noreferrer">mwit.link <ArrowUpRight size={13} /></a></footer>
+        <footer className="site-footer"><span lang="en">Made with 💙 by MWIT-LINK Development Team</span><a href="https://mwit.link" target="_blank" rel="noreferrer">mwit.link <ArrowUpRight size={13} /></a></footer>
       </div>
 
       <Toaster position="bottom-center" toastOptions={{

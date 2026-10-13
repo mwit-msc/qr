@@ -1,4 +1,5 @@
 import QRCodeStyling, { type Options } from 'qr-code-styling'
+import { appendQrCaption, type QrCaption, type RenderedQrImage } from './qr-caption'
 
 export type LogoOption = {
   id: string
@@ -98,14 +99,15 @@ export async function readCustomLogo(file: File): Promise<LogoOption> {
   }
 }
 
-export async function renderQrCode({ text, style, logo, size, foreground, background }: {
+export async function renderQrCode({ text, style, logo, size, foreground, background, caption }: {
   text: string
   style: string
   logo?: LogoOption
   size: number
   foreground: string
   background: string
-}): Promise<Blob> {
+  caption?: QrCaption
+}): Promise<RenderedQrImage> {
   const logoCanvas = logo?.path ? prepareLogo(await loadImage(logo.path), logo) : null
   const options: Options = {
     width: size,
@@ -121,7 +123,7 @@ export async function renderQrCode({ text, style, logo, size, foreground, backgr
   }
   const blob = await new QRCodeStyling(options).getRawData('png')
   if (!(blob instanceof Blob)) throw new Error('สร้าง QR ไม่สำเร็จ ลองใหม่อีกครั้ง')
-  if (!logoCanvas) return blob
+  if (!logoCanvas) return appendQrCaption(blob, size, caption, foreground, background)
 
   const objectUrl = URL.createObjectURL(blob)
   try {
@@ -143,9 +145,10 @@ export async function renderQrCode({ text, style, logo, size, foreground, backgr
     // Draw the original prepared logo at export resolution, so the logo itself
     // stays sharp even though the small outline mask is scaled up.
     context.drawImage(logoCanvas, (size - width * scale) / 2, (size - height * scale) / 2, width * scale, height * scale)
-    return await new Promise<Blob>((resolve, reject) => {
+    const compositedBlob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(result => result ? resolve(result) : reject(new Error('สร้าง QR ไม่สำเร็จ ลองใหม่อีกครั้ง')), 'image/png')
     })
+    return appendQrCaption(compositedBlob, size, caption, foreground, background)
   } finally {
     URL.revokeObjectURL(objectUrl)
   }
