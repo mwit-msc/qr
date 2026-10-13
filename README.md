@@ -35,6 +35,49 @@ A modern, stylish QR code generator built for MWIT. Create customized QR codes w
 4. Pick QR colors and an export width
 5. Download the QR code or copy it to clipboard
 
+## URL configuration
+
+Opening a configured URL fills the controls and generates the preview automatically. Settings remain editable; the URL does not trigger a download.
+
+| Parameter | Values | Default for a configured URL |
+| --- | --- | --- |
+| `link` | URL or text to encode | `https://mwit.ac.th` |
+| `title` | Caption title, up to 80 UTF-16 code units | Blank |
+| `description` | Caption description, up to 120 UTF-16 code units | Blank |
+| `logo` (alias `icon`) | `none`, `alvis`, `openhouse2025`, `premwit2026`, `openhouse2026` | `alvis` |
+| `style` | `square`, `dots`, `rounded`, `extra-rounded`, `classy`, `classy-rounded` | `rounded` |
+| `fontSize` | `small`, `medium`, `large` | `medium` |
+| `align` | `left`, `center`, `right` | `center` |
+| `foreground` | Six-digit hex, with or without `#` | `0B1220` |
+| `background` | Six-digit hex, with or without `#` | `FFFFFF` |
+| `size` | `400`, `1024`, `2048` (image width) | `400` |
+| `caption` | `true`, `false` | Enabled when nonblank caption text exists |
+
+Missing or blank title/description values add no text. `caption=false` hides the caption while retaining its text in the controls. Even with `caption=true`, blank text produces a square export. `logo=none` omits the logo. Custom uploaded logos cannot be supplied through a URL.
+
+Invalid choices fall back to defaults; unknown parameters are ignored. Parameter names and preset IDs are case-sensitive. The first occurrence of a repeated parameter wins, and `logo` takes precedence over `icon`. With no recognized configuration parameters, the homepage retains its usual `QR Code` / `mwit.link` caption.
+
+Examples:
+
+```text
+/?link=https%3A%2F%2Fexample.com&logo=none
+/?link=https%3A%2F%2Fexample.com&title=Open%20House&logo=openhouse2026&fontSize=large&align=center
+```
+
+Build queries with `URLSearchParams` to preserve nested URLs, Thai text, spaces, `&`, `+`, and `#`. Values are decoded once:
+
+```js
+const params = new URLSearchParams({
+  link: 'https://example.com/register?event=openhouse&lang=th',
+  title: 'Open House 2026',
+  description: 'ลงทะเบียนเข้าร่วมงาน',
+  logo: 'openhouse2026',
+  fontSize: 'large',
+  align: 'center',
+})
+const qrUrl = `${location.origin}/?${params}`
+```
+
 ## Development
 
 Run `npm run lint`, `npm test`, `npm run typecheck`, and `npm run build` to validate changes.

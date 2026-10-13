@@ -1,4 +1,5 @@
 import QRCodeStyling, { type Options } from 'qr-code-styling'
+import { encodeQrData } from './qr-encoding.mjs'
 import { appendQrCaption, type QrCaption, type RenderedQrImage } from './qr-caption'
 
 export type LogoOption = {
@@ -113,7 +114,7 @@ export async function renderQrCode({ text, style, logo, size, foreground, backgr
     width: size,
     height: size,
     type: 'canvas',
-    data: text,
+    data: encodeQrData(text),
     margin: Math.round(size * 0.04),
     qrOptions: { errorCorrectionLevel: logoCanvas ? 'H' : 'Q' },
     dotsOptions: { color: foreground, type: style as NonNullable<Options['dotsOptions']>['type'] },

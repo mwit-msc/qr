@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { readCustomLogo, renderQrCode, type LogoOption } from '@/lib/qr-renderer'
 import type { QrCaption } from '@/lib/qr-caption'
 import { normalizeHexColor, assessQrColors } from '@/lib/qr-colors.mjs'
+import { parseQrUrlConfig } from '@/lib/qr-url-config.mjs'
 import { toast, Toaster } from 'react-hot-toast'
 import { Download, Copy, QrCode, Check, Link2, Palette, Image as ImageIcon, ArrowUpRight, LoaderCircle, Upload, X, RotateCcw, TriangleAlert, Type, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
@@ -30,20 +32,33 @@ const isMobile = () =>
   typeof navigator !== 'undefined' &&
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
+const urlConfigOptions = { logoIds: logoOptions.map(logo => logo.id), styleIds: qrStyleOptions.map(style => style.id) }
+
 export default function QRCodeGenerator() {
-  const [text, setText] = useState('https://mwit.ac.th')
-  const [selectedLogo, setSelectedLogo] = useState('alvis')
-  const [selectedStyle, setSelectedStyle] = useState('rounded')
+  // A static homepage remains available while the browser resolves URL settings.
+  return <Suspense fallback={<QRStudio config={parseQrUrlConfig('', urlConfigOptions)} />}><ConfiguredQRStudio /></Suspense>
+}
+
+function ConfiguredQRStudio() {
+  const search = useSearchParams().toString()
+  const config = parseQrUrlConfig(search, urlConfigOptions)
+  return <QRStudio key={search} config={config} />
+}
+
+function QRStudio({ config }: { config: ReturnType<typeof parseQrUrlConfig> }) {
+  const [text, setText] = useState(config.link)
+  const [selectedLogo, setSelectedLogo] = useState(config.logo)
+  const [selectedStyle, setSelectedStyle] = useState(config.style)
   const [customLogo, setCustomLogo] = useState<LogoOption | null>(null)
   const [isUploading, setIsUploading] = useState(false)
-  const [foregroundInput, setForegroundInput] = useState('#0B1220')
-  const [backgroundInput, setBackgroundInput] = useState('#FFFFFF')
-  const [exportSize, setExportSize] = useState(400)
-  const [captionEnabled, setCaptionEnabled] = useState(true)
-  const [captionTitle, setCaptionTitle] = useState('QR Code')
-  const [captionDescription, setCaptionDescription] = useState('mwit.link')
-  const [captionSize, setCaptionSize] = useState<QrCaption['size']>('medium')
-  const [captionAlignment, setCaptionAlignment] = useState<QrCaption['alignment']>('center')
+  const [foregroundInput, setForegroundInput] = useState(config.foreground)
+  const [backgroundInput, setBackgroundInput] = useState(config.background)
+  const [exportSize, setExportSize] = useState(config.size)
+  const [captionEnabled, setCaptionEnabled] = useState(config.caption)
+  const [captionTitle, setCaptionTitle] = useState(config.title)
+  const [captionDescription, setCaptionDescription] = useState(config.description)
+  const [captionSize, setCaptionSize] = useState<QrCaption['size']>(config.fontSize)
+  const [captionAlignment, setCaptionAlignment] = useState<QrCaption['alignment']>(config.align)
   const [generatedCode, setGeneratedCode] = useState<{ key: string; url: string; blob: Blob; width: number; height: number } | null>(null)
   const [generationError, setGenerationError] = useState<{ key: string; message: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
